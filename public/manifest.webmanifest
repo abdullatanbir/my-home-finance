@@ -1,1 +1,1 @@
-{"name":"My Home Finance","short_name":"Home Finance","start_url":"/","display":"standalone","background_color":"#f4f8fb","theme_color":"#09283d","icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{"name":"My Home Finance","short_name":"Home Finance","start_url":"/my-home-finance/","scope":"/my-home-finance/","display":"standalone","background_color":"#f4f8fb","theme_color":"#09283d","icons":[{"src":"/my-home-finance/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}

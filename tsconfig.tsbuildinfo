@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/financeapp.tsx","./src/components/restorebackup.tsx","./src/components/transactionmodal.tsx","./src/lib/backup.ts","./src/lib/data.ts","./src/lib/reports.ts"],"version":"5.9.3"}

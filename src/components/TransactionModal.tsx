@@ -122,6 +122,49 @@ const incomeSources = [
     'Other Income'
 ];
 
+const compactDateMonths = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+type CompactDatePickerProps = {
+    value: string;
+    onChange: (value: string) => void;
+    allowEmpty?: boolean;
+    label: string;
+};
+
+function CompactDatePicker({ value, onChange, allowEmpty = false, label }: CompactDatePickerProps) {
+    const today = new Date();
+    const [rawYear, rawMonth, rawDay] = value.split('-').map(Number);
+    const year = Number.isInteger(rawYear) ? rawYear : today.getFullYear();
+    const month = Number.isInteger(rawMonth) ? rawMonth : today.getMonth() + 1;
+    const day = Number.isInteger(rawDay) ? rawDay : today.getDate();
+    const setDate = (nextYear: number, nextMonth: number, nextDay: number) => {
+        const maxDay = new Date(nextYear, nextMonth, 0).getDate();
+        const safeDay = Math.min(Math.max(1, nextDay), maxDay);
+        onChange(`${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(safeDay).padStart(2, '0')}`);
+    };
+
+    if (allowEmpty && !value) {
+        return <button type="button" className="compactDateEmpty" onClick={() => setDate(today.getFullYear(), today.getMonth() + 1, today.getDate())}>Add due date</button>;
+    }
+
+    const daysInMonth = new Date(year, month, 0).getDate();
+    return <div className="compactDatePicker" aria-label={label}>
+        <select aria-label={`${label} month`} value={month} onChange={event => setDate(year, Number(event.target.value), day)}>
+            {compactDateMonths.map((name, index) => <option key={name} value={index + 1}>{name.slice(0, 3)}</option>)}
+        </select>
+        <select aria-label={`${label} day`} value={Math.min(day, daysInMonth)} onChange={event => setDate(year, month, Number(event.target.value))}>
+            {Array.from({ length: daysInMonth }, (_, index) => index + 1).map(value => <option key={value} value={value}>{value}</option>)}
+        </select>
+        <select aria-label={`${label} year`} value={year} onChange={event => setDate(Number(event.target.value), month, day)}>
+            {Array.from({ length: 35 }, (_, index) => 2016 + index).map(value => <option key={value} value={value}>{value}</option>)}
+        </select>
+        {allowEmpty && <button type="button" className="compactDateClear" aria-label={`Clear ${label}`} onClick={() => onChange('')}>×</button>}
+    </div>;
+}
+
 
 const expensePaymentMethods = [
     'Cash',
@@ -361,12 +404,16 @@ export default function TransactionModal({
                                              kind,
                                              initial,
                                              initialGroup: requestedInitialGroup,
+                                             receiptPreview,
+                                             onRemoveReceipt,
                                              onClose,
                                              onSaved
                                          }: {
     kind: 'income' | 'expense';
     initial?: Transaction;
     initialGroup?: ExpenseGroup | null;
+    receiptPreview?: { name: string; previewUrl: string } | null;
+    onRemoveReceipt?: () => void;
     onClose: () => void;
     onSaved: () => void;
 }) {
@@ -454,7 +501,12 @@ export default function TransactionModal({
 
             notes:
                 initial?.notes ||
-                ''
+                '',
+
+            hours_worked:
+                initial?.hours_worked != null
+                    ? String(initial.hours_worked)
+                    : ''
         });
 
 
@@ -717,6 +769,15 @@ export default function TransactionModal({
             return;
         }
 
+        if (
+            kind === 'income' &&
+            form.hours_worked.trim() !== '' &&
+            (!Number.isFinite(Number(form.hours_worked)) || Number(form.hours_worked) < 0)
+        ) {
+            setMessage('Enter valid hours worked or leave it blank.');
+            return;
+        }
+
 
         if (
             kind === 'expense' &&
@@ -802,7 +863,12 @@ export default function TransactionModal({
                 notes:
                     form.notes
                         .trim() ||
-                    null
+                    null,
+
+                hours_worked:
+                    kind === 'income' && form.hours_worked.trim() !== ''
+                        ? Number(form.hours_worked)
+                        : null
             };
 
 
@@ -954,6 +1020,14 @@ export default function TransactionModal({
 
                 </header>
 
+                {kind === 'expense' && receiptPreview && (
+                    <section className="receiptInlinePreview" aria-label="Selected receipt photo">
+                        <img src={receiptPreview.previewUrl} alt="Selected receipt" />
+                        <div><strong>Receipt photo ready</strong><small>{receiptPreview.name}</small><em>Preview only — it is not attached or saved with this transaction.</em></div>
+                        <button type="button" onClick={onRemoveReceipt}>Remove</button>
+                    </section>
+                )}
+
 
                 <div className="modalForm">
 
@@ -967,25 +1041,13 @@ export default function TransactionModal({
                                     : 'Date'}
                             </span>
 
-                            <input
-                                type="date"
-                                required
-                                value={
-                                    form.occurred_on
-                                }
-                                onChange={
-                                    event =>
-                                        setForm(
-                                            current => ({
-                                                ...current,
-
-                                                occurred_on:
-                                                event
-                                                    .target
-                                                    .value
-                                            })
-                                        )
-                                }
+                            <CompactDatePicker
+                                label={kind === 'income' ? 'Received Date' : 'Expense Date'}
+                                value={form.occurred_on}
+                                onChange={value => setForm(current => ({
+                                    ...current,
+                                    occurred_on: value
+                                }))}
                             />
 
                         </label>
@@ -1374,24 +1436,14 @@ export default function TransactionModal({
                                         Due Date
                                     </span>
 
-                                    <input
-                                        type="date"
-                                        value={
-                                            form.due_date
-                                        }
-                                        onChange={
-                                            event =>
-                                                setForm(
-                                                    current => ({
-                                                        ...current,
-
-                                                        due_date:
-                                                        event
-                                                            .target
-                                                            .value
-                                                    })
-                                                )
-                                        }
+                                    <CompactDatePicker
+                                        label="Due Date"
+                                        value={form.due_date}
+                                        allowEmpty
+                                        onChange={value => setForm(current => ({
+                                            ...current,
+                                            due_date: value
+                                        }))}
                                     />
 
                                 </label>
@@ -1463,6 +1515,19 @@ export default function TransactionModal({
                                 </div>
 
                             </fieldset>
+
+                            <label className="field">
+                                <span>Hours Worked <small>(optional)</small></span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.25"
+                                    inputMode="decimal"
+                                    value={form.hours_worked}
+                                    placeholder="e.g. 32.5"
+                                    onChange={event => setForm(current => ({ ...current, hours_worked: event.target.value }))}
+                                />
+                            </label>
 
                         </>
                     )}

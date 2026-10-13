@@ -21,7 +21,7 @@ const groups: ExpenseGroup[] = [
 ];
 
 
-const defaultCategories:
+export const defaultCategories:
     Record<ExpenseGroup, string[]> = {
 
     Home: [
@@ -109,7 +109,7 @@ const defaultCategories:
 };
 
 
-const incomeSources = [
+export const incomeSources = [
     'Salary',
     'Bonus',
     'Uber',

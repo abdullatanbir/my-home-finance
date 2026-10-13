@@ -2751,7 +2751,7 @@ button.budgetMetric:hover,
     display: grid;
 
     grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+        repeat(6, minmax(0, 1fr));
 
     gap: 10px;
 }
@@ -2971,7 +2971,7 @@ button.budgetMetric:hover,
     display: grid;
 
     grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+        repeat(6, minmax(0, 1fr));
 
     align-items: end;
 
@@ -4402,7 +4402,7 @@ button.calendarCell:hover {
     display: grid;
 
     grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+        repeat(6, minmax(0, 1fr));
 
     gap: 4px;
 }
@@ -6467,6 +6467,103 @@ html.dark .bottomNav {
     }
 }
 
+/* Final stabilization: every destination owns one equal navigation slot. */
+.bottomNav > .mhfQuickExpense {
+    justify-self: stretch;
+    display: grid;
+    grid-template-rows: 40px auto;
+    justify-items: center;
+    align-content: center;
+}
+
+.bottomNav > .mhfQuickExpense span {
+    justify-self: center;
+    margin-inline: 0;
+    transform: translateY(-6px);
+}
+
+.mhfCurrentDateContext {
+    margin: 8px 2px 12px;
+    color: var(--text-soft);
+    font-size: .74rem;
+    font-weight: 750;
+}
+
+.mhfCopyDestination {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+    align-items: end;
+}
+
+.mhfCopyDestination > button { grid-column: 1 / -1; }
+
+.mhfCopyMonthGrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.mhfCopyMonthGrid button {
+    min-height: 34px;
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    color: var(--text);
+    background: var(--surface-raised);
+    font: inherit;
+    font-size: .68rem;
+    font-weight: 750;
+}
+
+.mhfCopyMonthGrid button.active {
+    border-color: var(--primary);
+    color: #fff;
+    background: var(--primary);
+}
+
+.mhfCopyMonthGrid button:disabled {
+    color: var(--text-faint);
+    background: var(--surface-soft);
+    opacity: .65;
+}
+
+.mhfCopyDestinations {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.mhfCopyDestinations button {
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    padding: 5px 8px;
+    color: var(--text);
+    background: var(--surface-raised);
+    font: inherit;
+    font-size: .7rem;
+}
+
+.mhfCalendarScheduledActivity {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 12px;
+    color: var(--text);
+    background: var(--surface-soft);
+}
+
+.mhfCalendarScheduledActivity div { display: grid; gap: 2px; min-width: 0; }
+.mhfCalendarScheduledActivity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .82rem; }
+.mhfCalendarScheduledActivity small { color: var(--text-soft); font-size: .68rem; }
+.mhfCalendarScheduledActivity b { color: var(--primary); white-space: nowrap; }
+
+@media (max-width: 390px) {
+    .mhfCopyDestination { grid-template-columns: 1fr; }
+}
+
 .receiptInlinePreview {
     margin: -4px 0 14px;
     padding: 8px;
@@ -6528,4 +6625,23 @@ html.dark .bottomNav {
     font: inherit;
     font-size: 10px;
     font-weight: 750;
+}
+
+/* Final More & Hero Studio refinement. */
+.mhfHeroCanvas.desktop { width: min(100%, 760px); min-height: 220px; margin: 0 auto; }
+.mhfHeroCanvas > div.mhfHeroTextPosition--center { right: 10px; left: 10px; margin: auto; text-align: center; }
+.mhfHeroCanvas > div.mhfHeroTextPosition--right { right: 10px; left: auto; text-align: right; }
+.heroCopy.mhfHeroTextPosition--center { margin-left: auto; margin-right: auto; text-align: center; }
+.heroCopy.mhfHeroTextPosition--right { margin-left: auto; text-align: right; }
+.mhfUtilityAction { width: 100%; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-top: 8px; border: 1px solid var(--border); color: var(--text); text-align: left; cursor: pointer; }
+.mhfUtilityAction > span { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; color: var(--primary); background: var(--primary-soft); }
+.mhfUtilityAction strong, .mhfUtilityAction small { display: block; }
+.mhfUtilityAction small { margin-top: 2px; color: var(--text-soft); font-size: .68rem; }
+.mhfBackupWorkflow { display: grid; gap: 7px; margin-bottom: 9px; }
+.mhfBackupWorkflow h2, .mhfBackupWorkflow p { margin: 0; }
+.mhfBackupWorkflow p { color: var(--text-soft); font-size: .72rem; line-height: 1.4; }
+.mhfBackupScope { display: flex; flex-wrap: wrap; gap: 9px; font-size: .72rem; }
+
+@media (max-width: 760px) {
+    .mhfHeroCanvas.desktop { min-height: 170px; }
 }

@@ -6,6 +6,7 @@ export type HeroPage =
     | 'More';
 
 export type HeroTheme = 'light' | 'dark';
+export type HeroTarget = 'main' | 'calendar';
 export type HeroPositionX = 'left' | 'center' | 'right';
 export type HeroPositionY = 'top' | 'center' | 'bottom';
 
@@ -13,6 +14,7 @@ export type HeroImage = {
     id: string;
     page: HeroPage;
     theme: HeroTheme;
+    target?: HeroTarget;
     blob: Blob;
     created_at: string;
     position_x?: HeroPositionX;
@@ -23,13 +25,30 @@ export type HeroImage = {
     };
 };
 
-export type HeroPresentation = { scale: number; position_x: number; position_y: number };
-export const DEFAULT_HERO_PRESENTATION: HeroPresentation = { scale: 1, position_x: 50, position_y: 50 };
+export type HeroPresentation = { scale: number; position_x: number; position_y: number; fit?: boolean };
+export const DEFAULT_HERO_PRESENTATION: HeroPresentation = { scale: 1, position_x: 50, position_y: 50, fit: false };
+const MIN_HERO_SCALE = 0.65;
+const MAX_HERO_SCALE = 2;
 
 const DATABASE = 'mhf-hero-images-v1';
 const STORE = 'images';
 const MAX_IMAGES_PER_COLLECTION = 5;
 const MAX_BYTES = 2 * 1024 * 1024;
+
+/** Works in secure browsers and local/LAN HTTP previews where randomUUID is absent. */
+function createHeroImageId() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    const bytes = typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function'
+        ? crypto.getRandomValues(new Uint32Array(3))
+        : new Uint32Array([
+            Math.floor(Math.random() * 0xffffffff),
+            Math.floor(Math.random() * 0xffffffff),
+            Math.floor(Math.random() * 0xffffffff)
+        ]);
+    return `mhf-hero-${Date.now().toString(36)}-${Array.from(bytes, value => value.toString(36)).join('-')}`;
+}
 
 function openDatabase(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
@@ -52,21 +71,21 @@ async function all(): Promise<HeroImage[]> {
     });
 }
 
-export async function listHeroImages(page: HeroPage, theme: HeroTheme) {
-    return (await all()).filter(item => item.page === page && item.theme === theme);
+export async function listHeroImages(page: HeroPage, theme: HeroTheme, target: HeroTarget = 'main') {
+    return (await all()).filter(item => item.page === page && item.theme === theme && (item.target || 'main') === target);
 }
 
-export async function addHeroImage(page: HeroPage, theme: HeroTheme, file: File) {
+export async function addHeroImage(page: HeroPage, theme: HeroTheme, file: File, target: HeroTarget = 'main') {
     if (!file.type.startsWith('image/') || file.size > MAX_BYTES) {
         throw new Error('Choose an image up to 2 MB.');
     }
-    const existing = await listHeroImages(page, theme);
+    const existing = await listHeroImages(page, theme, target);
     if (existing.length >= MAX_IMAGES_PER_COLLECTION) {
         throw new Error('A page/theme collection can contain up to 5 images.');
     }
     const database = await openDatabase();
     const image: HeroImage = {
-        id: crypto.randomUUID(), page, theme, blob: file, created_at: new Date().toISOString()
+        id: createHeroImageId(), page, theme, target, blob: file, created_at: new Date().toISOString()
     };
     await new Promise<void>((resolve, reject) => {
         const transaction = database.transaction(STORE, 'readwrite');
@@ -116,9 +135,10 @@ export async function updateHeroImagePresentation(
     presentation: HeroPresentation
 ) {
     const safe: HeroPresentation = {
-        scale: Math.min(2.5, Math.max(1, Number(presentation.scale) || 1)),
+        scale: Math.min(MAX_HERO_SCALE, Math.max(MIN_HERO_SCALE, Number(presentation.scale) || 1)),
         position_x: Math.min(100, Math.max(0, Number(presentation.position_x) || 50)),
-        position_y: Math.min(100, Math.max(0, Number(presentation.position_y) || 50))
+        position_y: Math.min(100, Math.max(0, Number(presentation.position_y) || 50)),
+        fit: presentation.fit === true
     };
     const database = await openDatabase();
     await new Promise<void>((resolve, reject) => {
@@ -141,8 +161,8 @@ export async function updateHeroImagePresentation(
     });
 }
 
-export async function clearHeroImageCollection(page: HeroPage, theme: HeroTheme) {
-    const images = await listHeroImages(page, theme);
+export async function clearHeroImageCollection(page: HeroPage, theme: HeroTheme, target: HeroTarget = 'main') {
+    const images = await listHeroImages(page, theme, target);
     const database = await openDatabase();
     await new Promise<void>((resolve, reject) => {
         const transaction = database.transaction(STORE, 'readwrite');

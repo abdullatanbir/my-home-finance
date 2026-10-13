@@ -97,12 +97,31 @@ export type SavingsContribution = {
     created_at: string;
     updated_at: string;
     recurring_occurrence_id?: string | null;
+    /** Additive recurring metadata; legacy records keep their existing amount. */
+    recurring_occurrence_ids?: string[];
+    manual_amount?: number;
+    recurring_amount?: number;
+};
+
+/** A virtual, future-only Calendar item. It is never a posted transaction. */
+export type ScheduledRecurringOccurrence = {
+    id: string;
+    rule_id: string;
+    kind: RecurringRule['kind'];
+    occurred_on: string;
+    name: string;
+    amount: number;
+    group_name: string | null;
+    category: string | null;
+    savings_track: SavingsTrack | null;
+    frequency: RecurringFrequency;
 };
 
 export type RecurringFrequency =
     | 'weekly'
     | 'biweekly'
-    | 'monthly';
+    | 'monthly'
+    | 'yearly';
 
 export type RecurringRule = {
     id: string;
@@ -396,6 +415,11 @@ function normalizeStore(
                     ...item,
                     amount: Number(item.amount),
                     notes: typeof item.notes === 'string' ? item.notes : null,
+                    manual_amount: Number.isFinite(Number(item.manual_amount)) ? Number(item.manual_amount) : undefined,
+                    recurring_amount: Number.isFinite(Number(item.recurring_amount)) ? Number(item.recurring_amount) : undefined,
+                    recurring_occurrence_ids: Array.isArray(item.recurring_occurrence_ids)
+                        ? item.recurring_occurrence_ids.filter((id): id is string => typeof id === 'string')
+                        : undefined,
                     updated_at: item.updated_at || item.created_at || new Date().toISOString()
                 })
             )
@@ -423,7 +447,7 @@ function normalizeStore(
                     typeof item === 'object' &&
                     typeof item.id === 'string' &&
                     (item.kind === 'income' || item.kind === 'expense' || item.kind === 'savings') &&
-                    (item.frequency === 'weekly' || item.frequency === 'biweekly' || item.frequency === 'monthly') &&
+                    (item.frequency === 'weekly' || item.frequency === 'biweekly' || item.frequency === 'monthly' || item.frequency === 'yearly') &&
                     typeof item.next_occurrence === 'string'
             ).map(item => ({
                 ...item,
@@ -568,7 +592,7 @@ function readStore(): Store {
                 : 0;
 
         if (
-            parsedVersion !== 3 ||
+            parsedVersion !== 4 ||
             parsedDeletedCount !==
             normalized
                 .deleted_transactions
@@ -1540,10 +1564,16 @@ export async function upsertSavingsContribution(
             id: existing?.id || createId(),
             track: contribution.track,
             month_start: contribution.month_start,
-            amount,
+            // A manual edit owns the manual portion only. Any already materialized
+            // recurring amount remains part of the same canonical monthly ledger row.
+            amount: amount + (existing?.recurring_amount || 0),
             notes: contribution.notes?.trim() || null,
             created_at: existing?.created_at || timestamp,
-            updated_at: timestamp
+            updated_at: timestamp,
+            manual_amount: amount,
+            recurring_amount: existing?.recurring_amount || 0,
+            recurring_occurrence_id: existing?.recurring_occurrence_id || null,
+            recurring_occurrence_ids: existing?.recurring_occurrence_ids
         };
 
         writeStore({
@@ -1574,10 +1604,10 @@ function addRecurringDate(
     frequency: RecurringFrequency
 ) {
     const date = new Date(`${value}T12:00:00`);
-    if (frequency === 'monthly') {
+    if (frequency === 'monthly' || frequency === 'yearly') {
         const day = date.getDate();
         date.setDate(1);
-        date.setMonth(date.getMonth() + 1);
+        date.setMonth(date.getMonth() + (frequency === 'yearly' ? 12 : 1));
         date.setDate(Math.min(day, new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()));
     } else {
         date.setDate(
@@ -1657,18 +1687,38 @@ export async function materializeDueRecurringRecords(
                 if (rule.kind === 'savings') {
                     const monthStart = `${rule.next_occurrence.slice(0, 7)}-01`;
                     const existing = contributions.find(item => item.track === rule.savings_track && item.month_start === monthStart);
-                    if (!existing && rule.savings_track) {
+                    const recurringIds = existing?.recurring_occurrence_ids || (existing?.recurring_occurrence_id ? [existing.recurring_occurrence_id] : []);
+                    if (!recurringIds.includes(occurrenceId) && rule.savings_track) {
                         const timestamp = new Date().toISOString();
-                        contributions.push({
-                            id: occurrenceId,
-                            track: rule.savings_track,
-                            month_start: monthStart,
-                            amount: rule.amount,
-                            notes: rule.notes,
-                            recurring_occurrence_id: occurrenceId,
-                            created_at: timestamp,
-                            updated_at: timestamp
-                        });
+                        if (existing) {
+                            const priorRecurring = existing.recurring_amount ?? (existing.recurring_occurrence_id ? existing.amount : 0);
+                            const manualAmount = existing.manual_amount ?? Math.max(0, existing.amount - priorRecurring);
+                            const updated: SavingsContribution = {
+                                ...existing,
+                                amount: manualAmount + priorRecurring + rule.amount,
+                                manual_amount: manualAmount,
+                                recurring_amount: priorRecurring + rule.amount,
+                                recurring_occurrence_id: existing.recurring_occurrence_id || occurrenceId,
+                                recurring_occurrence_ids: [...recurringIds, occurrenceId],
+                                updated_at: timestamp
+                            };
+                            const index = contributions.findIndex(item => item.id === existing.id);
+                            contributions[index] = updated;
+                        } else {
+                            contributions.push({
+                                id: occurrenceId,
+                                track: rule.savings_track,
+                                month_start: monthStart,
+                                amount: rule.amount,
+                                notes: rule.notes,
+                                recurring_occurrence_id: occurrenceId,
+                                recurring_occurrence_ids: [occurrenceId],
+                                manual_amount: 0,
+                                recurring_amount: rule.amount,
+                                created_at: timestamp,
+                                updated_at: timestamp
+                            });
+                        }
                         created += 1;
                     }
                 } else if (!transactions.some(item => item.recurring_occurrence_id === occurrenceId)) {
@@ -1684,7 +1734,10 @@ export async function materializeDueRecurringRecords(
                         amount: rule.amount,
                         status: rule.kind === 'expense' ? rule.status : 'paid',
                         payment_method: rule.payment_method,
-                        due_date: rule.due_date,
+                        // A rule's schedule is a template. Each canonical expense
+                        // receives the due date of its own occurrence, never the
+                        // date on which the rule was originally created.
+                        due_date: rule.kind === 'expense' ? rule.next_occurrence : rule.due_date,
                         notes: rule.notes,
                         hours_worked: rule.kind === 'income' ? rule.hours_worked : null,
                         recurring_occurrence_id: occurrenceId,
@@ -1700,6 +1753,59 @@ export async function materializeDueRecurringRecords(
         return { data: created, error: null };
     } catch (error) {
         return { data: null, error: asError(error, 'Unable to materialize recurring records.') };
+    }
+}
+
+function contributionHasRecurringOccurrence(
+    contribution: SavingsContribution,
+    occurrenceId: string
+) {
+    return contribution.recurring_occurrence_id === occurrenceId ||
+        contribution.recurring_occurrence_ids?.includes(occurrenceId) === true;
+}
+
+/**
+ * Resolves only the enabled future occurrences needed for one Calendar period.
+ * The return value is a display projection; it does not write financial data.
+ */
+export async function listScheduledRecurringOccurrences(
+    start: string,
+    end: string,
+    today = localDateString()
+): Promise<DataResult<ScheduledRecurringOccurrence[]>> {
+    try {
+        const store = readStore();
+        const occurrences: ScheduledRecurringOccurrence[] = [];
+
+        store.recurring_rules.forEach(rule => {
+            if (!rule.enabled) return;
+            let date = rule.next_occurrence;
+            while (date <= end && (!rule.end_date || date <= rule.end_date)) {
+                const occurrenceId = `mhf-recurring-v1-${rule.id}-${date}`;
+                const materialized = rule.kind === 'savings'
+                    ? store.savings_contributions.some(item => contributionHasRecurringOccurrence(item, occurrenceId))
+                    : store.transactions.some(item => item.recurring_occurrence_id === occurrenceId);
+                if (date >= start && date > today && !materialized) {
+                    occurrences.push({
+                        id: occurrenceId,
+                        rule_id: rule.id,
+                        kind: rule.kind,
+                        occurred_on: date,
+                        name: rule.name,
+                        amount: rule.amount,
+                        group_name: rule.group_name,
+                        category: rule.category,
+                        savings_track: rule.savings_track,
+                        frequency: rule.frequency
+                    });
+                }
+                date = addRecurringDate(date, rule.frequency);
+            }
+        });
+
+        return { data: occurrences.sort((a, b) => a.occurred_on.localeCompare(b.occurred_on)), error: null };
+    } catch (error) {
+        return { data: null, error: asError(error, 'Unable to resolve scheduled recurring activity.') };
     }
 }
 

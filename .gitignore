@@ -4,3 +4,8 @@ dist/
 .env.*
 *.log
 .idea/
+
+# Playwright generated artifacts
+test-results/
+playwright-report/
+blob-report/

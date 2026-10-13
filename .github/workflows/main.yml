@@ -2,7 +2,7 @@ name: Deploy My Home Finance
 
 on:
   push:
-    branches: ["main"]
+    branches: ["V-27-Development"]
   workflow_dispatch:
 
 permissions:

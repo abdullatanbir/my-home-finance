@@ -26,7 +26,7 @@ if (isDevelopmentBuild && typeof window !== 'undefined') {
     };
 }
 
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && !isDevelopmentBuild) {
     window.addEventListener('load', () =>
         navigator.serviceWorker.register('/my-home-finance/sw.js')
     );

@@ -1,0 +1,347 @@
+import { useState, useEffect, useRef, useId, cloneElement, isValidElement, type ReactElement, type FormEvent, type ReactNode } from 'react';
+import { today, uid, minor, money, isLiability, type FinancialStore, type Transaction, type TransactionType, type AccountType } from '../core/model';
+import { load, save, change, subscribeCore, addCanonical, syncLegacy, exportFinancialBackup, restoreFinancialBackup, prepareLegacyWorkspace } from '../core/store';
+import { actual, balance, totals, netWorth, goalProgress, comparison, budgetSummary, occurrences, materialize, validateTransaction } from '../core/engine';
+import { stageCSV, parseCSV, inferMapping, approveBatch, rollbackBatch, pdfText, pdfReviewCSV, type Mapping } from '../core/imports';
+import { getMedia, setMedia } from '../core/media';
+import { materializeDueRecurringRecords } from '../lib/data';
+import './blueprint.css';
+type View = 'Home' | 'Spending' | 'Investments' | 'Savings' | 'Net Worth' | 'Accounts & Cards' | 'Transactions' | 'Finance Calendar' | 'Recurring & Upcoming' | 'Income' | 'Reports' | 'Import Statement' | 'Settings' | 'Backup / Restore' | 'Categories' | 'Classification Rules' | 'Recently Deleted';
+type Modal = {
+    kind: string;
+    id?: string;
+};
+const types: TransactionType[] = ['expense', 'income', 'transfer', 'refund', 'adjustment'];
+const accountTypes: AccountType[] = ['checking', 'savings', 'credit_card', 'cash', 'loan', 'other_asset', 'other_liability'];
+const label = (s: string) => s.replaceAll('_', ' ').replace(/^./, s => s.toUpperCase());
+function Field({ name, label: caption, children, ...props }: {
+    name: string;
+    label: string;
+    children?: ReactNode;
+    [key: string]: unknown;
+}) { const id = useId(); return <div className="bc-field"><label htmlFor={id}>{caption}</label>{isValidElement(children) ? cloneElement(children as ReactElement<{
+    id: string;
+}>, { id }) : <input id={id} name={name} {...props}/>}</div>; }
+function Metric({ name, value, detail, onClick }: {
+    name: string;
+    value: string;
+    detail?: string;
+    onClick?: () => void;
+}) { return <button type="button" className="bc-card bc-metric" onClick={onClick}><span>{name}</span><strong>{value}</strong>{detail && <small>{detail}</small>}</button>; }
+function HistoryChart({points,title}:{points:{id:string;date:string;valueMinor:number}[];title:string}) {
+ const values=[...points].filter(p=>p.date<=today()).sort((a,b)=>a.date.localeCompare(b.date));
+ if(!values.length)return <p>No saved history for this period.</p>;
+ const max=Math.max(...values.map(p=>p.valueMinor),1),min=Math.min(...values.map(p=>p.valueMinor),0),range=max-min||1;
+ return <svg className="bc-history-chart" viewBox="0 0 600 180" role="img" aria-label={`${title}: ${values.map(p=>`${p.date} ${money(p.valueMinor)}`).join('; ')}`}><line x1="18" y1="140" x2="582" y2="140" stroke="currentColor" opacity=".25"/>{values.map((p,i)=>{const x=values.length===1?300:24+i/(values.length-1)*552;const y=130-(p.valueMinor-min)/range*100;return <g key={p.id}><circle cx={x} cy={y} r="5" fill="currentColor"><title>{p.date}: {money(p.valueMinor)}</title></circle><text x={x} y="165" fontSize="11" textAnchor="middle" fill="currentColor">{p.date.slice(5)}</text><text x={x} y={y-12} fontSize="10" textAnchor="middle" fill="currentColor">{money(p.valueMinor)}</text></g>})}</svg>
+}
+function download(name: string, data: unknown) { const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+export default function BlueprintApp() {
+    const [store, setStore] = useState<FinancialStore | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState(''), [view, setView] = useState<View>('Home'), [menu, setMenu] = useState(false), [modal, setModal] = useState<Modal | null>(null), [detail, setDetail] = useState<string | null>(null), [accountId, setAccountId] = useState(''), [tab, setTab] = useState('Overview'), [period, setPeriod] = useState(today().slice(0, 7)), [search, setSearch] = useState(''), [filterType, setFilterType] = useState(''), [filterStatus, setFilterStatus] = useState(''), [filterCategory, setFilterCategory] = useState(''), [filterGroup, setFilterGroup] = useState(''), [minAmount, setMinAmount] = useState(''), [maxAmount, setMaxAmount] = useState(''), [day, setDay] = useState(''), [calendar, setCalendar] = useState(false), [txType, setTxType] = useState<TransactionType>('expense'), [batchId, setBatchId] = useState(''), [csv, setCsv] = useState(''), [mapping, setMapping] = useState<Mapping | null>(null), [importAccount, setImportAccount] = useState(''), [pdfReview, setPdfReview] = useState(''), [audioUrl, setAudioUrl] = useState(''), [artUrl, setArtUrl] = useState(''), [playing, setPlaying] = useState(false);
+    const audio = useRef<HTMLAudioElement>(null), dialogRef = useRef<HTMLDialogElement>(null), lastFocus = useRef<HTMLElement | null>(null);
+    const run = (fn: () => void) => { try {
+        setError('');
+        fn();
+    }
+    catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+    } };
+    const update = (fn: (s: FinancialStore) => void) => run(() => { change(fn); });
+    useEffect(() => { const refresh = () => { try {
+        setStore(load());
+    }
+    catch (e) {
+        setError(String(e));
+    } }; run(() => { syncLegacy(); refresh(); }); const stop = subscribeCore(refresh); materializeDueRecurringRecords().then(result => { if (result.error)
+        setError(result.error.message);
+    else
+        run(() => { syncLegacy(); }); }); return stop; }, []);
+    useEffect(() => { if (store) {
+        document.documentElement.dataset.bcTheme = store.preferences.theme;
+        document.body.classList.add('bc-body');
+    } return () => { document.body.classList.remove('bc-body'); }; }, [store?.preferences.theme]);
+    useEffect(() => { if (modal || detail) {
+        if (!dialogRef.current?.open) lastFocus.current = document.activeElement as HTMLElement;
+        dialogRef.current?.showModal();
+    }
+    else {
+        dialogRef.current?.close();
+        lastFocus.current?.focus();
+    } }, [modal, detail]);
+    useEffect(() => { let urls: string[] = []; let live = true; Promise.all([getMedia('track'), getMedia('artwork')]).then(([track, art]) => { if (!live)
+        return; if (track) {
+        const u = URL.createObjectURL(track);
+        urls.push(u);
+        setAudioUrl(u);
+    } if (art) {
+        const u = URL.createObjectURL(art);
+        urls.push(u);
+        setArtUrl(u);
+    } }).catch(e => setError(String(e))); return () => { live = false; urls.forEach(u => URL.revokeObjectURL(u)); }; }, []);
+    useEffect(() => { if (audio.current && store) {
+        audio.current.volume = store.preferences.volume;
+        audio.current.muted = store.preferences.muted;
+    } }, [store?.preferences.volume, store?.preferences.muted, audioUrl]);
+    useEffect(() => { if (audioUrl && audio.current) {
+        audio.current.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    } }, [audioUrl]);
+    const navigate = (v: View) => { setView(v); setMenu(false); setAccountId(''); setDay(''); setSearch(''); setTab('Overview'); setFilterCategory(''); setFilterGroup(''); setFilterType(''); setFilterStatus(''); setMinAmount(''); setMaxAmount(''); setCalendar(false); };
+    const open = (kind: string, id?: string) => { setModal({ kind, id }); setDetail(null); setError(''); if (types.includes(kind as TransactionType))
+        setTxType(kind as TransactionType); };
+    const close = () => { setModal(null); setDetail(null); setError(''); };
+    const isDev=(import.meta as unknown as {env:{DEV:boolean}}).env.DEV;
+    if (!store)
+        return <main className="bc-app"><h1>My Home Finance</h1><p role="alert">{error || 'Loading your finances…'}</p><p>Your existing data has not been overwritten.</p><label>Restore a verified backup<input type="file" accept=".json" onChange={async e=>{const f=e.target.files?.[0];if(f){try{restoreFinancialBackup(JSON.parse(await f.text()));setStore(load())}catch(e){setError(String(e))}}}}/></label></main>;
+    const s = store, monthStart = `${period}-01`, monthEnd = `${period}-31`, summary = totals(s.transactions, monthStart, monthEnd < today() ? monthEnd : today()), wealth = netWorth(s, monthEnd < today() ? monthEnd : today()), budget = budgetSummary(s, period);
+    const categoryName = (id?: string) => s.categories.find(c => c.id === id)?.name || 'Uncategorized';
+    const accountName = (id?: string) => s.accounts.find(a => a.id === id)?.nickname || s.accounts.find(a => a.id === id)?.name || 'Unassigned';
+    const activeAccounts = s.accounts.filter(a => !a.archived);
+    const rows = s.transactions.filter(t => t.transactionDate.startsWith(period) && (!search || `${t.description} ${t.merchant || ''} ${t.notes || ''}`.toLowerCase().includes(search.toLowerCase())) && (!accountId || t.accountId === accountId || t.destinationAccountId === accountId) && (!filterType || t.type === filterType) && (!filterStatus || t.status === filterStatus) && (!filterCategory || t.categoryId === filterCategory || t.subcategoryId === filterCategory) && (!filterGroup || t.groupId === filterGroup) && (!minAmount || t.amountMinor >= Number(minAmount) * 100) && (!maxAmount || t.amountMinor <= Number(maxAmount) * 100) && (!day || t.transactionDate === day)).sort((a, b) => b.transactionDate.localeCompare(a.transactionDate));
+    const selected = detail ? s.transactions.find(t => t.id === detail) : undefined;
+    const batch = s.importBatches.find(b => b.id === batchId);
+    const txList = (items: Transaction[]) => items.length ? <div className="bc-list">{items.map(t => <button className="bc-row" key={t.id} onClick={() => setDetail(t.id)}><span className={`bc-icon ${t.type}`}>{t.type === 'income' ? '↙' : t.type === 'transfer' ? '⇄' : t.type === 'refund' ? '↩' : '↗'}</span><span className="bc-grow"><strong>{t.description}</strong><small>{t.transactionDate} · {categoryName(t.subcategoryId || t.categoryId)} · {accountName(t.accountId)}</small></span><span><strong>{money(t.amountMinor)}</strong><small>{label(t.type)} · {label(t.status)}{t.status === 'pending' && (t.dueDate || t.transactionDate) < today() ? ' · Overdue' : ''}</small></span></button>)}</div> : <p className="bc-empty">No activity matches this period. Add a transaction or choose another month.</p>;
+    const periodControl = <Field name="period" label="Period"><input type="month" value={period} onChange={e => { setPeriod(e.target.value); setDay(''); }}/></Field>;
+    const accountSelect = (name: string, caption: string, defaultValue = '') => <Field name={name} label={caption}><select name={name} defaultValue={defaultValue}><option value="">Unassigned</option>{activeAccounts.map(a => <option key={a.id} value={a.id}>{a.name} · {label(a.type)}</option>)}</select></Field>;
+    const categorySelect = (defaultValue = '') => <Field name="categoryId" label="Category"><select name="categoryId" defaultValue={defaultValue}><option value="">Uncategorized</option>{s.categories.filter(c => c.level !== 'group').map(c => <option value={c.id} key={c.id}>{c.parentId ? `${categoryName(c.parentId)} → ` : ''}{c.name}</option>)}</select></Field>;
+    const dayGrid = () => { const count = new Date(Number(period.slice(0, 4)), Number(period.slice(5, 7)), 0).getDate(); const first = new Date(`${period}-01T12:00:00`).getDay(); const projection = occurrences(s, monthStart, monthEnd); return <><div className="bc-calendar">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(x => <span key={x}>{x}</span>)}{Array.from({ length: first }, (_, i) => <span key={`blank-${i}`}/>)}{Array.from({ length: count }, (_, i) => { const date = `${period}-${String(i + 1).padStart(2, '0')}`, ts = s.transactions.filter(t => t.transactionDate === date), scheduled = projection.filter(t => t.date === date), sum = totals(ts, date, date); return <button key={date} className={day === date ? 'selected' : ''} onClick={() => setDay(date)} aria-label={`${date}, ${ts.length} actual or pending, ${scheduled.length} scheduled`}><strong>{i + 1}</strong>{sum.spending !== 0 && <small>{money(sum.spending)}</small>}{ts.length > 0 && <small>{ts.length} activity</small>}{scheduled.length > 0 && <small>{scheduled.length} Scheduled</small>}</button>; })}</div>{day && <section className="bc-card"><div className="bc-section-head"><h2>Daily Summary · {day}</h2><button onClick={() => setDay('')}>All days</button></div><p>Income {money(totals(s.transactions, day, day).income)} · Spending {money(totals(s.transactions, day, day).spending)}</p>{txList(rows.filter(t => t.transactionDate === day))}{projection.filter(t => t.date === day).map(t => <p key={t.id}>{t.name} · Scheduled {money(t.amountMinor)} · {label(t.kind)}</p>)}</section>}</>; };
+    const transactionFields = (existing?: Transaction) => <><Field name="type" label="Transaction type"><select name="type" value={txType} onChange={e => setTxType(e.target.value as TransactionType)}>{types.map(t => <option key={t} value={t}>{label(t)}</option>)}</select></Field><Field name="description" label="Description" required defaultValue={existing?.description}/><Field name="amount" label="Amount" type="number" step="0.01" required defaultValue={existing ? existing.amountMinor / 100 : undefined}/><Field name="date" label="Transaction date" type="date" required defaultValue={existing?.transactionDate || today()}/><Field name="status" label="Status"><select name="status" defaultValue={existing?.status || 'posted'}>{['posted', 'paid', 'pending', 'scheduled', 'cancelled', 'reversed'].map(x => <option key={x}>{x}</option>)}</select></Field>{accountSelect('accountId', txType === 'income' ? 'Deposited to' : txType === 'transfer' ? 'From account' : 'Paid from', existing?.accountId)}{txType === 'transfer' && accountSelect('destinationAccountId', 'To account', existing?.destinationAccountId)}<Field name="groupId" label="Group"><select name="groupId" defaultValue={existing?.groupId || ''}><option value="">No group</option>{s.categories.filter(c => c.level === 'group').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>{categorySelect(existing?.categoryId)}<Field name="subcategoryId" label="Subcategory"><select name="subcategoryId" defaultValue={existing?.subcategoryId || ''}><option value="">None</option>{s.categories.filter(c => c.level === 'subcategory').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field><Field name="dueDate" label="Due date" type="date" defaultValue={existing?.dueDate}/><Field name="merchant" label="Merchant" defaultValue={existing?.merchant}/>{txType === 'refund' && <Field name="originalTransactionId" label="Original expense"><select name="originalTransactionId" defaultValue={existing?.originalTransactionId || modal?.id || ''}><option value="">Unlinked refund</option>{s.transactions.filter(t => t.type === 'expense').map(t => <option key={t.id} value={t.id}>{t.description} · {money(t.amountMinor)}</option>)}</select></Field>}<Field name="notes" label="Notes" defaultValue={existing?.notes}/></>;
+    const submit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget), get = (key: string) => String(data.get(key) || ''), amount = (key: string) => minor(get(key) || '0');
+        run(() => {
+            const next = structuredClone(s);
+            const stamp = new Date().toISOString();
+            const kind = modal!.kind;
+            if (types.includes(kind as TransactionType) || kind === 'edit-transaction') {
+                const input = { type: get('type') as TransactionType, status: get('status') as Transaction['status'], amountMinor: amount('amount'), transactionDate: get('date'), description: get('description'), accountId: get('accountId') || undefined, destinationAccountId: get('destinationAccountId') || undefined, categoryId: get('categoryId') || undefined, subcategoryId: get('subcategoryId') || undefined, groupId: get('groupId') || undefined, dueDate: get('dueDate') || undefined, merchant: get('merchant') || undefined, notes: get('notes') || undefined, originalTransactionId: get('originalTransactionId') || undefined, sourceType: 'manual' as const };
+                if (kind === 'edit-transaction') {
+                    const i = next.transactions.findIndex(t => t.id === modal!.id);
+                    const t = { ...next.transactions[i], ...input, sourceType: next.transactions[i].sourceType, updatedAt: stamp };
+                    validateTransaction(next, t);
+                    next.transactions[i] = t;
+                }
+                else
+                    addCanonical(next, input);
+            }
+            else if (kind === 'copy' || kind === 'move') { const original=next.transactions.find(t=>t.id===modal!.id)!;const t={...original,transactionDate:get('date'),dueDate:original.dueDate?get('date'):undefined,updatedAt:stamp};if(kind==='copy'){t.id=uid();t.sourceType='copy';t.importBatchId=undefined;t.occurrenceId=undefined;t.recurringRuleId=undefined;t.createdAt=stamp;}validateTransaction(next,t);if(kind==='copy')next.transactions.push(t);else next.transactions[next.transactions.findIndex(x=>x.id===t.id)]=t;}
+        else if (kind === 'account') {
+                if (amount('opening') < 0 && ['credit_card', 'loan', 'other_liability'].includes(get('accountType')))
+                    throw Error('Enter the amount owed as a positive liability.');
+                next.accounts.push({ id: uid(), name: get('name'), nickname: get('nickname') || undefined, institutionName: get('institution') || undefined, type: get('accountType') as AccountType, last4: get('last4') || undefined, openingBalanceMinor: amount('opening'), openingBalanceDate: get('date'), archived: false, createdAt: stamp, updatedAt: stamp });
+            }
+            else if (kind === 'goal') {
+                next.goals.push({ id: uid(), name: get('name'), targetMinor: amount('target'), openingMinor: 0, accountId: get('accountId') || undefined, targetDate: get('targetDate') || undefined, notes: get('notes') });
+            }
+            else if (kind === 'contribution') {
+                const goal = next.goals.find(g => g.id === get('goalId'));
+                if (!goal)
+                    throw Error('Select a savings goal.');
+                const n = amount('amount');
+                if (n <= 0)
+                    throw Error('Enter a positive contribution.');
+                let transactionId: string | undefined;
+                if (get('from')) {
+                    if (!goal.accountId)
+                        throw Error('Link the goal to a destination account before transferring.');
+                    transactionId = addCanonical(next, { type: 'transfer', status: 'posted', amountMinor: n, transactionDate: get('date'), description: `Savings contribution · ${goal.name}`, accountId: get('from'), destinationAccountId: goal.accountId, savingsGoalId: goal.id, sourceType: 'manual' }).id;
+                }
+                next.contributions.push({ id: uid(), goalId: goal.id, amountMinor: n, date: get('date'), transactionId, notes: get('notes') });
+            }
+            else if (kind === 'investment') {
+                const invested = amount('invested'), value = amount('value');
+                if (invested < 0 || value < 0)
+                    throw Error('Investment values must be nonnegative.');
+                const id = uid(), aid = uid();
+                next.accounts.push({ id: aid, name: get('name'), type: 'other_asset', openingBalanceMinor: get('from') ? 0 : value, openingBalanceDate: get('date'), archived: false, createdAt: stamp, updatedAt: stamp });
+                if (get('from')) {
+                    addCanonical(next, { type: 'transfer', status: 'posted', amountMinor: invested, transactionDate: get('date'), description: `Investment contribution · ${get('name')}`, accountId: get('from'), destinationAccountId: aid, investmentId: id, sourceType: 'manual' });
+                    if (value !== invested)
+                        addCanonical(next, { type: 'adjustment', status: 'posted', amountMinor: value - invested, transactionDate: get('date'), description: `Initial valuation · ${get('name')}`, accountId: aid, investmentId: id, sourceType: 'manual' });
+                }
+                next.investments.push({ id, name: get('name'), type: get('investmentType'), institution: get('institution'), investedMinor: invested, accountId: aid, notes: get('notes'), valuations: [{ id: uid(), date: get('date'), valueMinor: value }] });
+            }
+            else if (kind === 'valuation') {
+                const i = next.investments.find(i => i.id === modal!.id)!;
+                const n = amount('value');
+                if (n < 0)
+                    throw Error('Valuation cannot be negative.');
+                const date = get('date');
+                if (i.valuations.some(v => v.date > date))
+                    throw Error('Add valuations in date order to preserve the audit history.');
+                if (i.accountId) {
+                    const a = next.accounts.find(a => a.id === i.accountId)!;
+                    const delta = n - balance(a, next.transactions, date);
+                    if (delta)
+                        addCanonical(next, { type: 'adjustment', status: 'posted', amountMinor: delta, transactionDate: date, description: `Valuation · ${i.name}`, accountId: a.id, investmentId: i.id, sourceType: 'manual' });
+                }
+                i.valuations.push({ id: uid(), date, valueMinor: n });
+            }
+            else if (kind === 'budget') {
+                const month = get('month');
+                const b = { id: next.budgets.find(b => b.month === month)?.id || uid(), month, plannedIncomeMinor: amount('planned'), spendingMinor: amount('budget'), categoryAmounts: Object.fromEntries(next.categories.filter(c => c.type === 'expense').map(c => [c.id, amount(`category:${c.id}`)])) };
+                next.budgets = next.budgets.filter(x => x.month !== month);
+                next.budgets.push(b);
+            }
+            else if (kind === 'recurring') {
+                next.recurringRules.push({ id: uid(), name: get('name'), kind: get('kind') as 'expense' | 'income' | 'savings', amountMinor: amount('amount'), frequency: get('frequency') as 'monthly', nextDate: get('date'), endDate: get('endDate') || undefined, enabled: true, status: get('kind') === 'expense' ? 'pending' : 'posted', accountId: get('accountId') || undefined, goalId: get('goalId') || undefined, categoryId: get('categoryId') || undefined });
+                if (amount('amount') <= 0)
+                    throw Error('Enter a positive recurring amount.');
+                if (get('kind') === 'savings' && !get('goalId'))
+                    throw Error('Select a goal for the recurring savings allocation.');
+                if (get('endDate') && get('endDate') < get('date'))
+                    throw Error('End date must not precede the first occurrence.');
+                materialize(next);
+            }
+            else if (kind === 'category') {
+                const parent = next.categories.find(c => c.id === get('parentId'));
+                const level = get('level') as 'group' | 'category' | 'subcategory';
+                if (level !== 'group' && (!parent || parent.level !== (level === 'category' ? 'group' : 'category')))
+                    throw Error('Select the parent required by Type → Group → Category → Subcategory.');
+                next.categories.push({ id: uid(), name: get('name'), type: parent?.type || get('type') as TransactionType, parentId: parent?.id, level });
+            }
+            else if (kind === 'rule') {
+                if (!get('contains').trim())
+                    throw Error('Enter merchant text.');
+                next.classificationRules.push({ id: uid(), contains: get('contains'), type: get('type') as TransactionType, categoryId: get('categoryId') || undefined });
+            }
+            save(next);
+            setNotice('Saved successfully.');
+            close();
+        });
+    };
+    const spendingBreakdown = () => { const values = s.categories.filter(c => c.level === 'group' || c.level === 'category').map(c => ({ c, value: totals(s.transactions.filter(t => t.categoryId === c.id || t.groupId === c.id), monthStart, monthEnd < today() ? monthEnd : today()).spending })).filter(x => x.value !== 0).sort((a, b) => b.value - a.value); return <><div className="bc-metrics"><Metric name="Income" value={money(summary.income)} onClick={() => { setFilterType('income'); navigate('Transactions'); setFilterType('income'); }}/><Metric name="Expenses" value={money(summary.spending)}/><Metric name="Net Cash Flow" value={money(summary.cashFlow)}/></div><section className="bc-card"><h2>Where your money went</h2><p>Actual posted and paid expenses, adjusted by refunds. Select a category to inspect its evidence.</p>{values.map(({ c, value }) => <button className="bc-breakdown" key={c.id} onClick={() => { navigate('Transactions'); if (c.level === 'group')
+        setFilterGroup(c.id);
+    else
+        setFilterCategory(c.id); }}><span>{c.name}</span><meter min="0" max={Math.max(summary.spending, value, 1)} value={Math.max(0, value)}/><strong>{money(value)}</strong></button>)}{!values.length && <p>No categorized actual spending yet.</p>}</section><section className="bc-card"><h2>Largest transactions</h2>{txList(rows.filter(t => t.type === 'expense' && actual(t)).sort((a, b) => b.amountMinor - a.amountMinor).slice(0, 5))}<h2>Frequent expenses</h2>{Object.entries(rows.filter(t => t.type === 'expense' && actual(t)).reduce<Record<string, number>>((map, t) => ({ ...map, [t.merchant || t.description]: (map[t.merchant || t.description] || 0) + 1 }), {})).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => <button key={name} onClick={() => { navigate('Transactions'); setSearch(name); }}>{name} · {count} transactions</button>)}</section></>; };
+    return <div className="bc-app"><audio ref={audio} src={audioUrl || undefined} onEnded={() => setPlaying(false)} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} loop/>
+ <header className="bc-header"><button aria-label="Feature menu" onClick={() => setMenu(!menu)}>☰</button><button className="bc-brand" onClick={() => navigate('Home')}><strong>MY HOME FINANCE</strong><small>YOUR MONEY. IN PERSPECTIVE.</small></button><button aria-label="Settings" onClick={() => navigate('Settings')}>⚙</button></header>
+ {menu && <nav className="bc-feature-menu" aria-label="Features">{([['OVERVIEW', 'Home', 'Net Worth'], ['FINANCE', 'Accounts & Cards', 'Transactions', 'Budget', 'Finance Calendar', 'Recurring & Upcoming', 'Reports'], ['PERSONAL', 'Income', 'Savings', 'Investments'], ['TOOLS', 'Import Statement'], ['SYSTEM', 'Backup / Restore', 'Settings']] as string[][]).map(([group, ...items]) => <section key={group}><h2>{group}</h2>{items.map(v => <button key={v} onClick={() => { navigate(v === 'Budget' ? 'Spending' : v as View); if (v === 'Budget')
+        setTab('Budget'); }}>{v}</button>)}</section>)}</nav>}
+ <main id="bc-main"><div className="bc-title"><div><p className="bc-eyebrow">{view === 'Home' ? new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : 'FINANCIAL CORE 2.0'}</p><h1>{view === 'Home' ? 'Welcome home.' : view}</h1></div>{!['Settings', 'Import Statement', 'Backup / Restore', 'Categories', 'Classification Rules', 'Savings', 'Investments', 'Accounts & Cards', 'Net Worth', 'Recurring & Upcoming'].includes(view) && periodControl}</div>
+ {error && <p className="bc-alert" role="alert">{error}</p>}{notice && <p className="bc-notice" role="status">{notice}<button aria-label="Dismiss notification" onClick={() => setNotice('')}>×</button></p>}
+ {view === 'Home' && <><section className="bc-player" style={artUrl ? { backgroundImage: `linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.25)),url(${artUrl})` } : undefined}><div><small>MAKE ROOM FOR A QUIET MOMENT</small><h2>Your financial rhythm</h2><p>{audioUrl ? (playing ? 'Playing your ambient track' : 'Your local track is ready') : 'Add your music and artwork in Settings'}</p></div><button disabled={!audioUrl} aria-label={playing ? 'Pause ambient music' : 'Play ambient music'} onClick={() => { if (playing)
+        audio.current?.pause();
+    else
+        audio.current?.play().catch(() => setNotice('Tap play after enabling audio in this browser.')); }}>{playing ? 'Ⅱ' : '▶'}</button><button aria-label="Mute ambient music" onClick={() => update(s => { s.preferences.muted = !s.preferences.muted; })}>{s.preferences.muted ? 'Muted' : 'Sound on'}</button></section><div className="bc-metrics"><Metric name="Net Worth" value={money(wealth.total)} detail="Assets minus liabilities" onClick={() => navigate('Net Worth')}/><Metric name="Spent · Last 7 Days" value={money(totals(s.transactions, (() => { const d = new Date(`${today()}T12:00:00`); d.setDate(d.getDate() - 6); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })(), today()).spending)} detail="Today and the previous six calendar days" onClick={() => navigate('Spending')}/><Metric name="Budget remaining" value={money(budget.remaining)} detail={`${money(budget.spending)} used of ${money(budget.budgeted)}`} onClick={() => { navigate('Spending'); setTab('Budget'); }}/></div><section className="bc-card"><h2>Your week in spending</h2><div className="bc-week">{Array.from({ length: 7 }, (_, i) => { const d = new Date(`${today()}T12:00:00`); d.setDate(d.getDate() - 6 + i); const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; const value = totals(s.transactions, date, date).spending; return <button key={date} onClick={() => { navigate('Finance Calendar'); setPeriod(date.slice(0, 7)); setDay(date); }}><strong>{money(value)}</strong><span style={{ height: `${Math.min(90, Math.max(3, value / 500))}px` }}/><small>{d.toLocaleDateString('en-US', { weekday: 'short' })}</small></button>; })}</div></section><div className="bc-columns"><section className="bc-card"><div className="bc-section-head"><h2>Coming up</h2><button onClick={() => navigate('Recurring & Upcoming')}>See all</button></div>{s.transactions.filter(t => ['scheduled', 'pending'].includes(t.status)).slice(0, 4).map(t => <button className="bc-simple-row" key={t.id} onClick={() => setDetail(t.id)}>{t.description}<small>{t.dueDate || t.transactionDate} · {(t.dueDate || t.transactionDate) < today() ? 'Overdue' : t.transactionDate === today() ? 'Due today' : label(t.status)}</small><strong>{money(t.amountMinor)}</strong></button>)}{!s.transactions.some(t => ['scheduled', 'pending'].includes(t.status)) && !s.recurringRules.some(r => r.enabled) && <p>No upcoming bills or recurring items.</p>}{occurrences(s, today(), `${Number(today().slice(0, 4)) + 1}-12-31`).slice(0, 4).map(t => <p key={t.id}>{t.name} · {t.date} · Scheduled {money(t.amountMinor)}</p>)}</section><section className="bc-card"><div className="bc-section-head"><h2>Recent activity</h2><button onClick={() => navigate('Transactions')}>See all</button></div>{txList([...s.transactions].sort((a, b) => b.transactionDate.localeCompare(a.transactionDate)).slice(0, 5))}</section></div></>}
+ {view === 'Net Worth' && <><div className="bc-metrics"><Metric name="Total Assets" value={money(wealth.assets)} onClick={() => { navigate('Accounts & Cards'); setFilterType('asset'); }}/><Metric name="Total Liabilities" value={money(wealth.liabilities)} onClick={() => { navigate('Accounts & Cards'); setFilterType('liability'); }}/><Metric name="Net Worth" value={money(wealth.total)}/></div><section className="bc-card"><div className="bc-section-head"><h2>Saved history</h2>{periodControl}<button onClick={() => update(s => { s.netWorthSnapshots = s.netWorthSnapshots.filter(x => x.date !== today()); s.netWorthSnapshots.push({ id: uid(), date: today(), valueMinor: netWorth(s).total }); })}>Save today's snapshot</button></div><p>History uses saved snapshots only. Missing periods are not estimated.</p><HistoryChart points={s.netWorthSnapshots.filter(x=>x.date.startsWith(period))} title="Net Worth snapshots"/>{s.netWorthSnapshots.filter(x => x.date.startsWith(period)).map(x => <p key={x.id}>{x.date} · {money(x.valueMinor)}</p>)}</section><section className="bc-card"><h2>Assets and liabilities</h2>{s.accounts.map(a => <button key={a.id} className="bc-simple-row" onClick={() => { navigate('Accounts & Cards'); setAccountId(a.id); }}>{a.name} · {label(a.type)}<strong>{money(balance(a, s.transactions))}</strong></button>)}</section></>}
+ {view === 'Spending' && <><div role="tablist" aria-label="Spending workspace" className="bc-tabs">{['Overview', 'Breakdown', 'Budget'].map(x => <button role="tab" aria-selected={tab === x} key={x} onClick={() => setTab(x)}>{x}</button>)}</div>{tab === 'Overview' && <><div className="bc-metrics"><Metric name="Total spent" value={money(summary.spending)} detail={(() => { const prev = new Date(`${period}-01T12:00:00`); prev.setMonth(prev.getMonth() - 1); const p = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`; const ratio = comparison(summary.spending, totals(s.transactions, `${p}-01`, `${p}-31`).spending); return ratio === null ? 'No previous-period spending' : `${ratio.toFixed(1)}% versus previous month`; })()}/><Metric name="Actual income" value={money(summary.income)}/></div><section className="bc-card"><div className="bc-section-head"><h2>Spending activity</h2><button onClick={() => setCalendar(!calendar)}>{calendar ? 'Show Chart' : 'Show Calendar'}</button><button onClick={() => open('expense')}>Add Expense</button></div>{calendar ? dayGrid() : <><div className="bc-week" aria-label="Weekly actual spending chart">{Array.from({ length: 5 }, (_, i) => { const start = `${period}-${String(i * 7 + 1).padStart(2, '0')}`; const end = `${period}-${String(Math.min(31, i * 7 + 7)).padStart(2, '0')}`; const value = totals(s.transactions, start, end).spending; return <button key={i} onClick={() => { navigate('Transactions'); setFilterType('expense'); }}><strong>{money(value)}</strong><span style={{ height: `${Math.min(100, Math.max(4, value / 1000))}px` }}/><small>Week {i + 1}</small></button>; })}</div><h3>Latest transactions</h3>{txList(rows.filter(t => t.type === 'expense' || t.type === 'refund'))}</>}</section></>}{tab === 'Breakdown' && spendingBreakdown()}{tab === 'Budget' && <><div className="bc-metrics"><Metric name="Budgeted Spending" value={money(budget.budgeted)}/><Metric name="Actual Spending" value={money(budget.spending)}/><Metric name="Projected Remaining" value={money(budget.projectedRemaining)} detail="Budget − actual spending − known scheduled expenses"/></div><section className="bc-card"><h2>Income plan and actuals</h2><p>Planned Income: {money(s.budgets.find(b => b.month === period)?.plannedIncomeMinor || 0)} · Actual Income: {money(summary.income)}</p><button onClick={() => open('budget')}>Configure Budget</button>{Object.entries(s.budgets.find(b => b.month === period)?.categoryAmounts || {}).filter(([, n]) => n > 0).map(([id, n]) => <button className="bc-simple-row" key={id} onClick={() => { navigate('Transactions'); setFilterCategory(id); }}>{categoryName(id)}<strong>{money(totals(s.transactions.filter(t => t.categoryId === id || t.groupId === id), monthStart, monthEnd < today() ? monthEnd : today()).spending)} / {money(n)}</strong></button>)}</section></>}</>}
+ {view === 'Accounts & Cards' && <><button className="bc-primary" onClick={() => open('account')}>Add Account</button><div className="bc-account-grid">{s.accounts.filter(a => (!accountId || a.id === accountId) && (!filterType || (filterType === 'liability' ? isLiability(a) : !isLiability(a)))).map(a => <section className="bc-card" key={a.id}><button className="bc-account-title" onClick={() => setAccountId(a.id)}><small>{a.institutionName || label(a.type)} {a.last4 ? `•••• ${a.last4}` : ''}</small><h2>{a.nickname || a.name}{a.archived ? ' · Archived' : ''}</h2><strong>{money(balance(a, s.transactions))}</strong></button><p>Opening {money(a.openingBalanceMinor)} on {a.openingBalanceDate}</p><button onClick={() => update(s => { const x = s.accounts.find(x => x.id === a.id)!; x.archived = !x.archived; x.updatedAt = new Date().toISOString(); })}>{a.archived ? 'Reactivate' : 'Archive'}</button>{a.type === 'credit_card' && !a.archived && <button onClick={() => open('transfer')}>Record Payment</button>}</section>)}</div>{accountId && <section className="bc-card"><button onClick={() => setAccountId('')}>All accounts</button><h2>Monthly account activity</h2>{periodControl}{txList(rows)}</section>}<p className="bc-help">Archiving keeps transaction history. Opening balances represent the balance before the first activity dated on or after the opening date.</p></>}
+ {(view === 'Transactions' || view === 'Income') && <><div className="bc-section-head"><button className="bc-primary" onClick={() => open(view === 'Income' ? 'income' : 'expense')}>{view === 'Income' ? 'Add Income' : 'Add Transaction'}</button><span>{rows.length} matching records</span></div><details className="bc-card" open={!!search}><summary>Search and filters</summary><div className="bc-form-grid"><Field name="search" label="Search"><input value={search} onChange={e => setSearch(e.target.value)}/></Field><Field name="filterType" label="Type"><select value={filterType} onChange={e => setFilterType(e.target.value)}><option value="">All types</option>{types.map(t => <option key={t} value={t}>{label(t)}</option>)}</select></Field><Field name="accountFilter" label="Account/Card"><select value={accountId} onChange={e => setAccountId(e.target.value)}><option value="">All accounts</option>{s.accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></Field><Field name="categoryFilter" label="Category"><select value={filterCategory} onChange={e => setFilterCategory(e.target.value)}><option value="">All categories</option>{s.categories.filter(c => c.level !== 'group').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field><Field name="groupFilter" label="Group"><select value={filterGroup} onChange={e => setFilterGroup(e.target.value)}><option value="">All groups</option>{s.categories.filter(c => c.level === 'group').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field><Field name="statusFilter" label="Status"><select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}><option value="">All statuses</option>{['posted', 'paid', 'pending', 'scheduled', 'cancelled', 'reversed'].map(x => <option key={x}>{x}</option>)}</select></Field><Field name="minimum" label="Minimum amount"><input type="number" min="0" step="0.01" value={minAmount} onChange={e => setMinAmount(e.target.value)}/></Field><Field name="maximum" label="Maximum amount"><input type="number" min="0" step="0.01" value={maxAmount} onChange={e => setMaxAmount(e.target.value)}/></Field></div></details><section className="bc-card">{txList(view === 'Income' ? rows.filter(t => t.type === 'income') : rows)}</section></>}
+ {view === 'Finance Calendar' && <section className="bc-card"><h2>Financial history & planning</h2><p>Posted/Paid are actual. Pending, Scheduled and future recurring items stay separate from actual spending.</p>{dayGrid()}</section>}
+ {view === 'Recurring & Upcoming' && <><button className="bc-primary" onClick={() => open('recurring')}>Add Recurring Transaction</button><section className="bc-card"><h2>Rules and templates</h2>{s.recurringRules.map(r => <div className="bc-simple-row" key={r.id}><span>{r.name}<small>{label(r.frequency)} · Next {r.nextDate} · {r.kind} · {money(r.amountMinor)} · {r.enabled ? 'Enabled' : 'Paused'}</small></span><button onClick={() => update(s => { const rule = s.recurringRules.find(x => x.id === r.id)!; rule.enabled = !rule.enabled; if (rule.legacy) {
+        const raw = localStorage.getItem('my-home-finance-personal-v1');
+        if (raw) {
+            const old = JSON.parse(raw);
+            old.recurring_rules = old.recurring_rules.map((x: {
+                id: string;
+                enabled: boolean;
+            }) => x.id === rule.id ? { ...x, enabled: rule.enabled } : x);
+            localStorage.setItem('my-home-finance-personal-v1', JSON.stringify(old));
+            s.legacy = old;
+        }
+    } })}>{r.enabled ? 'Pause' : 'Resume'}</button></div>)}<button onClick={() => update(s => { materialize(s); })}>Refresh due occurrences</button></section><section className="bc-card"><h2>Due, pending and scheduled</h2>{txList(s.transactions.filter(t => ['scheduled', 'pending'].includes(t.status)))}{occurrences(s, today(), `${Number(today().slice(0, 4)) + 1}-12-31`).slice(0, 100).map(t => <p key={t.id}>{t.date} · {t.name} · Scheduled {money(t.amountMinor)}</p>)}</section></>}
+ {view === 'Savings' && <><div className="bc-section-head"><button className="bc-primary" onClick={() => open('goal')}>Add Savings Goal</button><button onClick={() => open('contribution')}>Savings Contribution</button></div><div className="bc-account-grid">{s.goals.map(g => <section className="bc-card" key={g.id}><h2>{g.name}</h2><strong className="bc-large">{money(goalProgress(s, g.id))}</strong><p>of {money(g.targetMinor)} · {g.accountId ? accountName(g.accountId) : 'Allocation only'}</p><progress max={Math.max(g.targetMinor, 1)} value={Math.max(0, goalProgress(s, g.id))}/>{g.targetDate && <p>Target {g.targetDate}</p>}<p>{g.notes}</p><button onClick={() => open('contribution', g.id)}>Contribute to {g.name}</button><details><summary>Contribution history</summary>{s.contributions.filter(c => c.goalId === g.id).map(c => <button className="bc-simple-row" disabled={!c.transactionId} key={c.id} onClick={() => setDetail(c.transactionId!)}>{c.date} · {money(c.amountMinor)} · {c.transactionId ? 'Transfer' : 'Allocation'}{c.notes && ` · ${c.notes}`}</button>)}</details></section>)}</div><p className="bc-help">Goals earmark money already held in accounts. They do not add a second asset to Net Worth or count as spending.</p></>}
+ {view === 'Investments' && <><button className="bc-primary" onClick={() => open('investment')}>Add Investment Entry</button><div className="bc-account-grid">{s.investments.map(i => { const v = [...i.valuations].reverse().sort((a, b) => b.date.localeCompare(a.date)).find(v => v.date <= today()); return <section className="bc-card" key={i.id}><small>{i.institution} · {i.type}</small><h2>{i.name}</h2><strong className="bc-large">{v ? money(v.valueMinor) : 'No current valuation'}</strong><p>Amount invested {money(i.investedMinor)} · Valued {v?.date || '—'}</p><button onClick={() => open('valuation', i.id)}>Update valuation</button><HistoryChart points={i.valuations} title={`${i.name} saved valuations`}/><details><summary>Saved valuation history</summary>{[...i.valuations].sort((a, b) => b.date.localeCompare(a.date)).map(v => <p key={v.id}>{v.date} · {money(v.valueMinor)}</p>)}</details><p>{i.notes}</p></section>; })}</div><p className="bc-help">Manual tracking. Each investment has an asset account counted once in Net Worth. History uses saved valuations.</p></>}
+ {view === 'Reports' && <><button onClick={()=>window.print()}>Print / Save PDF report</button><button onClick={()=>download(`transactions-${period}.json`,{kind:'filtered-data-export',period,transactions:rows})}>Export period evidence</button><div className="bc-report-bars" aria-label={`Cash Flow: income ${money(summary.income)}, expenses ${money(summary.spending)}, net cash flow ${money(summary.cashFlow)}`}>{[['Income', summary.income], ['Expenses', summary.spending], ['Net Cash Flow', summary.cashFlow]].map(([name, n]) => <div key={String(name)}><span>{name}</span><meter min={Math.min(0, summary.cashFlow)} max={Math.max(summary.income, summary.spending, 1)} value={Number(n)}/><strong>{money(Number(n))}</strong></div>)}</div>{spendingBreakdown()}<section className="bc-card"><h2>Evidence</h2><p>Cash Flow = qualifying actual Income minus Expense, adjusted by Refunds. Transfers, valuations, allocations and forecasts are excluded.</p>{txList(rows.filter(t => actual(t) && ['expense', 'income', 'refund'].includes(t.type)))}</section></>}
+ {view === 'Import Statement' && <><section className="bc-card"><h2>Local statement review</h2><p>Files stay on this device. Select the account explicitly. Nothing becomes a transaction before approval.</p><Field name="importAccount" label="Destination account"><select value={importAccount} onChange={e => setImportAccount(e.target.value)}><option value="">Select account</option>{activeAccounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></Field><Field name="statement" label="Statement file (CSV or digital PDF)"><input type="file" accept=".csv,.pdf,text/csv,application/pdf" onChange={async (e) => { const f = e.target.files?.[0]; if (!f)
+        return; try {
+        if (f.size > 10 * 1024 * 1024)
+            throw Error('Choose a statement under 10 MB.');
+        if (f.name.toLowerCase().endsWith('.pdf')) {
+            const text = await pdfText(f);
+            setPdfReview(text);
+            setCsv(pdfReviewCSV(text));
+            setMapping(null);
+        }
+        else {
+            const text = await f.text();
+            const table = parseCSV(text);
+            setCsv(text);
+            setMapping(inferMapping(table[0]));
+            setPdfReview('');
+        }
+    }
+    catch (e) {
+        setError(String(e));
+    } }}/></Field>{pdfReview && <><h3>PDF text verification</h3><p>Verify this extracted text against the original statement. Review the suggested rows against the original statement and correct them below before staging. If the layout cannot be recognized, enter the reviewed rows using the displayed CSV header. All PDF rows require a second review.</p><pre className="bc-pdf-text">{pdfReview}</pre><Field name="pdfCSV" label="Reviewed PDF rows as CSV"><textarea placeholder={'Date,Description,Amount\n2026-10-13,Purchase,-12.34'} value={csv} onChange={e => { setCsv(e.target.value); setMapping(null); }}/></Field></>}{csv && <><details><summary>Preview source rows</summary><pre className="bc-pdf-text">{csv.slice(0, 3000)}</pre></details>{mapping && <div className="bc-form-grid">{(['date', 'description', 'amount', 'debit', 'credit'] as const).map(key => <Field key={key} name={key} label={`Map ${label(key)}`}><select value={mapping[key] ?? -1} onChange={e => setMapping({ ...mapping, [key]: Number(e.target.value) })}><option value={-1}>Not mapped</option>{parseCSV(csv)[0].map((name, i) => <option key={i} value={i}>{name}</option>)}</select></Field>)}</div>}<button className="bc-primary" onClick={() => run(() => { const b = stageCSV(s, importAccount, csv, mapping || undefined, pdfReview ? 'pdf' : 'csv'); change(s => s.importBatches.push(b)); setBatchId(b.id); setCsv(''); setMapping(null); setPdfReview(''); })}>Stage for review</button></>}</section>{batch && batch.state === 'staged' && <section className="bc-card"><h2>Review queue · {batch.rows.length} rows</h2><p>Check the type, account direction and category. A credit-card payment is a transfer from your bank to your card. Select the bank source and card destination. Exclude a payment if it is already recorded.</p>{batch.rows.map((r, index) => <fieldset className="bc-import-row" key={r.id}><legend>Row {index + 1} · {r.status}</legend><p>{r.date} · {r.description} · {money(r.amountMinor)}</p>{r.errors.length > 0 && <p role="alert">{r.errors.join(', ')}. Exclude this row or cancel and correct the source file.</p>}{r.duplicateIds.length > 0 && <p>Possible duplicate: {r.duplicateIds.map(id => { const t = s.transactions.find(t => t.id === id); return t ? `${t.description} (${t.transactionDate}, ${money(t.amountMinor)})` : 'same row in this file'; }).join('; ')}. Compare existing transactions before marking Ready.</p>}<div className="bc-form-grid"><Field name={`type-${r.id}`} label="Classification"><select value={r.type} onChange={e => update(s => { s.importBatches.find(b => b.id === batch.id)!.rows.find(x => x.id === r.id)!.type = e.target.value as TransactionType; })}>{types.map(t => <option key={t} value={t}>{label(t)}</option>)}</select></Field><Field name={`category-${r.id}`} label="Import category"><select value={r.categoryId || ''} onChange={e => update(s => { s.importBatches.find(b => b.id === batch.id)!.rows.find(x => x.id === r.id)!.categoryId = e.target.value || undefined; })}><option value="">Uncategorized</option>{s.categories.filter(c => c.level !== 'group').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>{r.type === 'transfer' && <Field name={`from-${r.id}`} label="Transfer source"><select value={r.fromAccountId || batch.accountId} onChange={e => update(s => { s.importBatches.find(b => b.id === batch.id)!.rows.find(x => x.id === r.id)!.fromAccountId = e.target.value; })}>{activeAccounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></Field>}{r.type === 'transfer' && <Field name={`to-${r.id}`} label="Transfer destination"><select value={r.destinationAccountId || ''} onChange={e => update(s => { s.importBatches.find(b => b.id === batch.id)!.rows.find(x => x.id === r.id)!.destinationAccountId = e.target.value; })}><option value="">Select owned destination</option>{activeAccounts.filter(a => a.id !== (r.fromAccountId||batch.accountId)).map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></Field>}<Field name={`review-${r.id}`} label="Review status"><select value={r.status} onChange={e => update(s => { s.importBatches.find(b => b.id === batch.id)!.rows.find(x => x.id === r.id)!.status = e.target.value as 'Ready'; })}>{['Ready', 'Review', 'Unknown', 'Possible Duplicate', 'Excluded'].map(x => <option key={x}>{x}</option>)}</select></Field></div><button onClick={() => update(s => { s.classificationRules.push({ id: uid(), contains: r.description, type: r.type, categoryId: r.categoryId }); })}>Remember classification locally</button></fieldset>)}<div className="bc-actions"><button className="bc-primary" onClick={() => update(s => approveBatch(s, batch.id))}>Approve reviewed import</button><button onClick={() => update(s => { s.importBatches.find(b => b.id === batch.id)!.state = 'cancelled'; })}>Cancel import</button></div></section>}<section className="bc-card"><h2>Import History</h2>{s.importBatches.map(b => <div key={b.id} className="bc-import-history"><button onClick={() => setBatchId(b.id)}>{b.createdAt.slice(0, 10)} · {accountName(b.accountId)} · {b.period} · {b.state}</button><p>{b.importedIds.length} imported · {b.duplicatesSkipped} duplicates skipped · {b.excludedCount} excluded</p>{b.state === 'approved' && <button onClick={() => update(s => rollbackBatch(s, b.id))}>Undo batch</button>}</div>)}</section></>}
+ {(view === 'Settings' || view === 'Backup / Restore' || view === 'Categories' || view === 'Classification Rules' || view === 'Recently Deleted') && <><div className="bc-settings-nav">{(['Settings', 'Categories', 'Accounts & Cards', 'Classification Rules', 'Recently Deleted', 'Backup / Restore'] as View[]).map(v => <button key={v} aria-current={v === view ? 'page' : undefined} onClick={() => navigate(v)}>{v}</button>)}</div>{view === 'Settings' && <><section className="bc-card"><h2>Appearance</h2><Field name="theme" label="Theme"><select value={s.preferences.theme} onChange={e => update(s => { s.preferences.theme = e.target.value as 'dark' | 'light'; })}><option value="dark">Dark</option><option value="light">Light</option></select></Field></section><section className="bc-card"><h2>Music & Artwork</h2><Field name="track" label="Local MP3"><input type="file" accept="audio/mpeg,.mp3" onChange={async (e) => { const f = e.target.files?.[0]; if (!f)
+        return; try {
+        await setMedia('track', f);
+        if (audioUrl)
+            URL.revokeObjectURL(audioUrl);
+        setAudioUrl(URL.createObjectURL(f));
+    }
+    catch (e) {
+        setError(String(e));
+    } }}/></Field><button onClick={async () => { try {
+        await setMedia('track');
+        if (audioUrl)
+            URL.revokeObjectURL(audioUrl);
+        setAudioUrl('');
+        setPlaying(false);
+    }
+    catch (e) {
+        setError(String(e));
+    } }}>Remove music</button><Field name="artwork" label="Custom player artwork"><input type="file" accept="image/*" onChange={async (e) => { const f = e.target.files?.[0]; if (!f)
+        return; try {
+        await setMedia('artwork', f);
+        if (artUrl)
+            URL.revokeObjectURL(artUrl);
+        setArtUrl(URL.createObjectURL(f));
+    }
+    catch (e) {
+        setError(String(e));
+    } }}/></Field><button onClick={async () => { try {
+        await setMedia('artwork');
+        if (artUrl)
+            URL.revokeObjectURL(artUrl);
+        setArtUrl('');
+    }
+    catch (e) {
+        setError(String(e));
+    } }}>Remove artwork</button><Field name="volume" label="Volume"><input type="range" min="0" max="1" step="0.05" value={s.preferences.volume} onChange={e => update(s => { s.preferences.volume = Number(e.target.value); })}/></Field><p>Audio continues during navigation. Browser permission may require a tap to start sound. Media stays in device storage and is excluded from financial backups.</p></section><section className="bc-card"><h2>Application & compatibility</h2><p>Financial schema 5 · Blueprint C · Local-first PWA</p><button onClick={async () => { try {
+        const registration = await navigator.serviceWorker?.getRegistration();
+        if (!registration) {
+            setNotice('Install or launch the production PWA to check for updates.');
+            return;
+        }
+        await registration.update();
+        if (registration.waiting) {
+            navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+            registration.waiting.postMessage({ type: 'ACTIVATE_UPDATE' });
+        }
+        else
+            setNotice('The current application shell is up to date.');
+    }
+    catch (e) {
+        setError(String(e));
+    } }}>Check for application update</button>{s.migration.warnings.map(w => <p key={w}>{w}</p>)}{isDev&&<button onClick={() => { prepareLegacyWorkspace(); localStorage.setItem('mhf-workspace', 'legacy'); location.reload(); }}>Open accepted Release 2 workspace</button>}<p>Copy and move are available in Transaction Detail. Recently Deleted preserves removed transactions. Legacy migration retains prior configuration and recovery records.</p></section></>}{view === 'Categories' && <section className="bc-card"><h2>Type → Group → Category → Subcategory</h2><button className="bc-primary" onClick={() => open('category')}>Add Category</button>{s.categories.map(c => <p key={c.id}>{label(c.type)} → {c.parentId ? `${categoryName(c.parentId)} → ` : ''}{c.name} <small>({c.level})</small></p>)}</section>}{view === 'Recently Deleted' && <section className="bc-card"><h2>Recently Deleted</h2><p>Deleted records stay recoverable here. Permanent deletion requires confirmation.</p>{s.trash.map(entry=><div key={entry.id} className="bc-import-history"><p>{entry.transaction.description} · {money(entry.transaction.amountMinor)} · Deleted {entry.deletedAt.slice(0,10)}</p><button onClick={()=>update(s=>{if(s.transactions.some(t=>t.id===entry.id))throw Error('A transaction with this ID already exists.');s.transactions.push(entry.transaction);s.trash=s.trash.filter(x=>x.id!==entry.id)})}>Restore {entry.transaction.description}</button><button onClick={()=>{if(confirm('Permanently delete this transaction? This cannot be undone.'))update(s=>{s.trash=s.trash.filter(x=>x.id!==entry.id);if(Array.isArray(s.legacy.transactions)){s.legacy.transactions=(s.legacy.transactions as {id:string}[]).filter(t=>t.id!==entry.id);const raw=localStorage.getItem('my-home-finance-personal-v1');if(raw){const legacy=JSON.parse(raw);legacy.transactions=legacy.transactions.filter((t:{id:string})=>t.id!==entry.id);localStorage.setItem('my-home-finance-personal-v1',JSON.stringify(legacy));}}})}}>Permanently delete</button></div>)}</section>}{view === 'Classification Rules' && <section className="bc-card"><h2>Local classification rules</h2><button onClick={() => open('rule')}>Add Rule</button>{s.classificationRules.map(r => <div className="bc-simple-row" key={r.id}><p>{r.contains} → {label(r.type)} → {categoryName(r.categoryId)}</p><button onClick={() => update(s => { s.classificationRules = s.classificationRules.filter(x => x.id !== r.id); })}>Remove {r.contains}</button></div>)}</section>}{view === 'Backup / Restore' && <section className="bc-card"><h2>Financial backup and recovery</h2><p>Version 5 contains all structured financial records, import provenance, rules and preferences. Versions 1–4 migrate automatically. MP3 and image binaries are excluded.</p><button className="bc-primary" onClick={() => download(`my-home-finance-${today()}.json`, exportFinancialBackup(s))}>Download financial backup</button><Field name="backup" label="Restore backup"><input type="file" accept=".json,application/json" onChange={async (e) => { const f = e.target.files?.[0]; if (!f)
+        return; try {
+        const data = JSON.parse(await f.text());
+        if (!confirm('Replace current financial data with this backup? A local recovery copy of the current state will be retained.'))
+            return;
+        restoreFinancialBackup(data);
+        setNotice('Backup restored successfully.');
+    }
+    catch (e) {
+        setError(String(e));
+    } e.target.value = ''; }}/></Field><button onClick={() => run(() => { const raw = localStorage.getItem('mhf-before-restore'); if (!raw)
+        throw Error('No pre-restore recovery copy exists.'); download(`pre-restore-${today()}.json`, { format: 'my-home-finance', version: 5, store: JSON.parse(raw) }); })}>Download pre-restore recovery copy</button><button onClick={() => run(() => { const raw = localStorage.getItem('mhf-pre-blueprint-c-backup'); if (!raw)
+        throw Error('No legacy migration copy exists.'); download('pre-blueprint-c-backup.json', JSON.parse(raw)); })}>Download pre-migration backup</button></section>}</>}
+ </main><nav className="bc-bottom" aria-label="Primary">{(['Home', 'Spending', 'Investments', 'Savings'] as View[]).map((v, i) => <button key={v} aria-label={v === 'Investments' ? 'Investment' : v} aria-current={view === v ? 'page' : undefined} onClick={() => navigate(v)}><span>{['⌂', '↗', '▥', '◎'][i]}</span>{v === 'Investments' ? 'Investment' : v}</button>)}<button className="bc-quick" aria-label="Quick Add" onClick={() => open('quick')}><span>+</span>Quick</button></nav>
+ <dialog ref={dialogRef} aria-label={detail ? 'Transaction Detail' : modal?.kind === 'quick' ? 'Quick Add' : modal ? label(modal.kind) : 'Finance dialog'} onCancel={e => { e.preventDefault(); close(); }}><div className="bc-section-head"><h2>{detail ? 'Transaction Detail' : modal?.kind === 'quick' ? 'Quick Add' : modal ? label(modal.kind) : ''}</h2><button type="button" aria-label="Close dialog" onClick={close}>×</button></div>{error && <p role="alert" className="bc-alert">{error}</p>}
+ {selected && <><p className="bc-eyebrow">{label(selected.type)} · {label(selected.status)}</p><h3>{selected.description}</h3><strong className="bc-large">{money(selected.amountMinor)}</strong><dl className="bc-detail">{Object.entries({ 'Date': selected.transactionDate, 'Paid from / From': accountName(selected.accountId), 'To': selected.destinationAccountId ? accountName(selected.destinationAccountId) : '—', 'Group': categoryName(selected.groupId), 'Category': categoryName(selected.categoryId), 'Subcategory': categoryName(selected.subcategoryId), 'Merchant': selected.merchant || '—', 'Source': selected.sourceType, 'Import batch': selected.importBatchId || '—', 'Notes': selected.notes || '—', 'ID': selected.id }).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl><div className="bc-actions"><button onClick={()=>open('copy',selected.id)}>Copy transaction</button><button onClick={()=>open('move',selected.id)}>Move transaction</button><button onClick={()=>update(s=>{if(s.transactions.some(t=>t.originalTransactionId===selected.id&&!['cancelled','reversed'].includes(t.status))||s.contributions.some(c=>c.transactionId===selected.id))throw Error('Resolve linked refunds or contributions before deleting this transaction.');s.trash.push({id:selected.id,transaction:selected,deletedAt:new Date().toISOString()});s.transactions=s.transactions.filter(t=>t.id!==selected.id);setDetail(null)})}>Delete transaction</button><button onClick={() => { setTxType(selected.type); setModal({ kind: 'edit-transaction', id: selected.id }); setDetail(null); }}>Edit transaction</button>{['pending', 'scheduled'].includes(selected.status) && <button onClick={() => update(s => { const t = s.transactions.find(t => t.id === selected.id)!; t.status = 'paid'; t.updatedAt = new Date().toISOString(); })}>Mark paid</button>}{selected.type === 'expense' && <button onClick={() => open('refund', selected.id)}>Record refund</button>}<button onClick={() => update(s => { const t = s.transactions.find(t => t.id === selected.id)!; if (s.transactions.some(x => x.originalTransactionId === t.id && !['cancelled', 'reversed'].includes(x.status)))
+        throw Error('Cancel linked refunds before cancelling this expense.'); t.status = 'cancelled'; t.updatedAt = new Date().toISOString(); })}>Cancel transaction</button></div></>}
+ {modal?.kind === 'quick' && <div className="bc-quick-grid">{[['expense', 'Expense'], ['income', 'Income'], ['transfer', 'Transfer'], ['contribution', 'Savings Contribution'], ['investment', 'Investment Entry'], ['recurring', 'Recurring Transaction']].map(([key, name]) => <button key={key} onClick={() => open(key)}>{name}<span>↗</span></button>)}</div>}
+ {modal && modal.kind !== 'quick' && <form onSubmit={submit} className="bc-form-grid">{(types.includes(modal.kind as TransactionType) || modal.kind === 'edit-transaction') && transactionFields(s.transactions.find(t => t.id === modal.id && modal.kind === 'edit-transaction'))}
+ {(modal.kind==='copy'||modal.kind==='move')&&<Field name="date" label="Destination date" type="date" required defaultValue={s.transactions.find(t=>t.id===modal.id)?.transactionDate||today()}/>}{modal.kind === 'account' && <><Field name="name" label="Account name" required/><Field name="nickname" label="Nickname"/><Field name="institution" label="Institution"/><Field name="accountType" label="Account type"><select name="accountType">{accountTypes.map(t => <option value={t} key={t}>{label(t)}</option>)}</select></Field><Field name="last4" label="Last four digits" pattern="[0-9]{4}" maxLength={4}/><Field name="opening" label="Opening balance (amount owed for liabilities)" type="number" step="0.01" required defaultValue="0"/><Field name="date" label="Opening balance date" type="date" required defaultValue={today()}/></>}
+ {modal.kind === 'goal' && <><Field name="name" label="Goal name" required/><Field name="target" label="Target amount" type="number" min="0" step="0.01" required/>{accountSelect('accountId', 'Linked savings account')}<Field name="targetDate" label="Target date" type="date"/><Field name="notes" label="Notes"/></>}
+ {modal.kind === 'contribution' && <><Field name="goalId" label="Savings goal"><select name="goalId" defaultValue={modal.id || ''} required><option value="">Select goal</option>{s.goals.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></Field><Field name="amount" label="Contribution amount" type="number" step="0.01" min="0.01" required/>{accountSelect('from', 'Transfer from (optional; blank means allocation only)')}<Field name="date" label="Contribution date" type="date" required defaultValue={today()}/><Field name="notes" label="Notes"/></>}
+ {modal.kind === 'investment' && <><Field name="name" label="Investment name" required/><Field name="investmentType" label="Investment type" required/><Field name="institution" label="Institution / platform"/><Field name="invested" label="Amount invested" type="number" step="0.01" min="0" required/><Field name="value" label="Current manual value" type="number" step="0.01" min="0" required/>{accountSelect('from', 'Funded from (optional)')}<Field name="date" label="Valuation date" type="date" required defaultValue={today()}/><Field name="notes" label="Notes"/></>}
+ {modal.kind === 'valuation' && <><Field name="value" label="New manual value" type="number" min="0" step="0.01" required/><Field name="date" label="Valuation date" type="date" defaultValue={today()} required/></>}
+ {modal.kind === 'budget' && <><Field name="month" label="Budget month" type="month" required defaultValue={period}/><Field name="planned" label="Planned Income" type="number" min="0" step="0.01" defaultValue={(s.budgets.find(b => b.month === period)?.plannedIncomeMinor || 0) / 100}/><Field name="budget" label="Budgeted Spending" type="number" min="0" step="0.01" defaultValue={(s.budgets.find(b => b.month === period)?.spendingMinor || 0) / 100}/>{s.categories.filter(c => c.type === 'expense').map(c => <Field key={c.id} name={`category:${c.id}`} label={`${c.name} budget`} type="number" min="0" step="0.01" defaultValue={(s.budgets.find(b => b.month === period)?.categoryAmounts[c.id] || 0) / 100}/>)}</>}
+ {modal.kind === 'recurring' && <><Field name="name" label="Recurring name" required/><Field name="kind" label="Recurring type"><select name="kind"><option value="expense">Expense</option><option value="income">Income</option><option value="savings">Savings allocation</option></select></Field><Field name="amount" label="Recurring amount" type="number" min="0.01" step="0.01" required/><Field name="frequency" label="Frequency"><select name="frequency">{['weekly', 'biweekly', 'monthly', 'yearly'].map(x => <option key={x}>{x}</option>)}</select></Field><Field name="date" label="First occurrence" type="date" required defaultValue={today()}/><Field name="endDate" label="End date (optional)" type="date"/>{accountSelect('accountId', 'Account')}{categorySelect()}<Field name="goalId" label="Goal for savings"><select name="goalId"><option value="">None</option>{s.goals.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></Field></>}
+ {modal.kind === 'category' && <><Field name="name" label="Category name" required/><Field name="type" label="Transaction type"><select name="type">{types.map(t => <option key={t}>{t}</option>)}</select></Field><Field name="level" label="Hierarchy level"><select name="level"><option value="category">Category</option><option value="subcategory">Subcategory</option><option value="group">Group</option></select></Field><Field name="parentId" label="Parent group or category"><select name="parentId"><option value="">None (group only)</option>{s.categories.filter(c => c.level !== 'subcategory').map(c => <option key={c.id} value={c.id}>{c.name} ({c.level})</option>)}</select></Field></>}
+ {modal.kind === 'rule' && <><Field name="contains" label="Merchant contains" required/><Field name="type" label="Classification type"><select name="type">{types.map(t => <option key={t}>{t}</option>)}</select></Field>{categorySelect()}</>}
+ <div className="bc-form-footer"><button type="button" onClick={close}>Cancel</button><button className="bc-primary" type="submit">Save</button></div></form>}
+ </dialog></div>;
+}

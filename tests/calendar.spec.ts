@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixture';
 
 test('Finance Calendar month/year picker changes reporting period', async ({ page }) => {
     await page.goto('/');

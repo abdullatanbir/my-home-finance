@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixture';
 
 async function openRecurring(page: any) {
     await page.getByRole('button', { name: 'More', exact: true }).click();

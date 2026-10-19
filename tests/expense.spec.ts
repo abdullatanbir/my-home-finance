@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixture';
 
 test('Move relocates an expense to exactly one destination period', async ({ page }) => {
     await page.goto('/');

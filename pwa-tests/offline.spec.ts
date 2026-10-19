@@ -19,3 +19,26 @@ test('production PWA precaches app, launches offline and activates an updated sh
   await page.getByRole('navigation',{name:'Primary'}).getByRole('button',{name:'Spending',exact:true}).click();await expect(page.getByRole('heading',{name:'Spending',exact:true})).toBeVisible();
  } finally {writeFileSync('dist/sw.js',original);await context.setOffline(false)}
 });
+
+test('RC2 local hero video and ambient music reload from IndexedDB while offline',async({page,context})=>{
+ await page.goto('/my-home-finance/');
+ await expect(page.getByRole('heading',{name:'Welcome home.'})).toBeVisible();
+ await page.evaluate(async()=>{await navigator.serviceWorker.ready});
+ await page.getByRole('button',{name:'Settings',exact:true}).click();
+ await page.getByLabel('Home hero image or video',{exact:true}).setInputFiles('tests/fixtures/rc2-hero.webm');
+ await expect(page.locator('.bc-media-settings').getByText('rc2-hero.webm',{exact:true})).toBeVisible();
+ await page.getByLabel('Local MP3',{exact:true}).setInputFiles('tests/fixtures/rc2-ambient.mp3');
+ await expect(page.locator('.bc-media-settings').getByText('rc2-ambient.mp3',{exact:true})).toBeVisible();
+ await page.getByRole('navigation',{name:'Primary'}).getByRole('button',{name:'Home',exact:true}).click();
+ await expect.poll(()=>page.locator('.bc-hero video').evaluate((v:HTMLVideoElement)=>v.readyState>=2&&v.muted)).toBe(true);
+ await context.setOffline(true);
+ try {
+  await page.reload();
+  await expect(page.getByRole('heading',{name:'Welcome home.'})).toBeVisible();
+  await expect(page.locator('.bc-hero video')).toHaveAttribute('src',/^blob:/);
+  await expect(page.locator('audio')).toHaveAttribute('src',/^blob:/);
+  await expect.poll(()=>page.locator('.bc-hero video').evaluate((v:HTMLVideoElement)=>v.readyState>=2&&v.muted)).toBe(true);
+  await page.getByRole('navigation',{name:'Primary'}).getByRole('button',{name:'Spending',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Spending',exact:true})).toBeVisible();
+ } finally {await context.setOffline(false)}
+});

@@ -12,3 +12,5 @@ blob-report/
 
 # Blueprint C generated validation artifacts
 qa-output/
+
+pwa-test-results/

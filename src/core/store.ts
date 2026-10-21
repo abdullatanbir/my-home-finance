@@ -1,3 +1,4 @@
+import { expandCategories } from './categoryDefaults';
 import { emptyStore, uid, type FinancialStore, type Transaction } from './model';
 import { migrateLegacy, validateStore } from './migration';
 import { materialize, validateTransaction } from './engine';
@@ -7,8 +8,9 @@ const EVENT = 'mhf-core';
 export function load(): FinancialStore { const raw = localStorage.getItem(CORE_KEY); if (raw) {
     const s = JSON.parse(raw);
     validateStore(s);
+    if (expandCategories(s)) save(s);
     return s;
-} const old = localStorage.getItem(LEGACY_KEY); const s = old ? migrateLegacy(JSON.parse(old)) : emptyStore(); if (old && !localStorage.getItem('mhf-pre-blueprint-c-backup'))
+} const old = localStorage.getItem(LEGACY_KEY); const s = old ? migrateLegacy(JSON.parse(old)) : emptyStore(); expandCategories(s); if (old && !localStorage.getItem('mhf-pre-blueprint-c-backup'))
     localStorage.setItem('mhf-pre-blueprint-c-backup', old); save(s); return s; }
 export function save(s: FinancialStore) { validateStore(s); localStorage.setItem(CORE_KEY, JSON.stringify(s)); window.dispatchEvent(new Event(EVENT)); }
 export function change(fn: (s: FinancialStore) => void) { const s = load(); fn(s); save(s); return s; }

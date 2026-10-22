@@ -1,0 +1,91 @@
+/* HOME-01 only: artwork, localized legibility and a compact neutral record. */
+.bc-app .home01-hero {
+  height: clamp(184px, 28vw, 240px);
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+}
+.bc-app .home01-hero .bc-hero-visual {
+  background: linear-gradient(125deg, #303334, #191c1e 70%);
+}
+.bc-app .home01-hero .bc-hero-shade { background: none; }
+.bc-app .home01-hero .bc-hero-context {
+  position: absolute;
+  left: 22px;
+  bottom: 22px;
+  padding: 12px 20px 12px 14px;
+  margin: 0;
+  min-width: 0;
+  max-width: calc(100% - 100px);
+  border: 0;
+  border-radius: 12px;
+  backdrop-filter: none;
+  background: linear-gradient(90deg, #0a0b0dd9, #0a0b0dbd 78%, transparent);
+  text-shadow: 0 1px 3px #0008;
+}
+.bc-app .home01-hero .bc-eyebrow {
+  font-size: 9px;
+  line-height: 1.5;
+  letter-spacing: 1.5px;
+  color: #fff;
+  margin: 0 0 5px;
+}
+.bc-app .home01-hero h1 {
+  font-size: clamp(24px, 3vw, 30px);
+  line-height: 1.15;
+  letter-spacing: -.7px;
+  font-weight: 450;
+  margin: 0;
+}
+.bc-app .home01-hero .bc-hero-date {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: .1px;
+  line-height: 1.5;
+  margin: 5px 0 0;
+  color: #fff;
+}
+.bc-app .home01-hero .bc-orbit-player {
+  position: absolute;
+  left: auto;
+  right: 22px;
+  bottom: 24px;
+  transform: none;
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  min-height: 48px;
+  background: #17191bd9;
+  color: #f5f5f3;
+  border: 1px solid #ffffff88;
+  opacity: 1;
+}
+.bc-app .home01-hero .bc-orbit-player:disabled { opacity: .65; cursor: default; }
+.bc-app .home01-hero .bc-orbit-player:focus-visible { outline: 3px solid #fff; outline-offset: 5px; }
+.home01-hero .bc-orbit-action { background: #f2f2ef; color: #1c1d1f; }
+.home01-hero .bc-orbit-disc {
+  animation: bc-vinyl-spin 12s linear infinite;
+  animation-play-state: paused;
+}
+.home01-hero .bc-orbit-player.is-playing .bc-orbit-disc { animation-play-state: running; }
+.home01-empty {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  font-size: 10px;
+  color: #fff;
+  border-radius: 20px;
+  padding: 5px 9px;
+  background: #17191bd9;
+}
+.home01-settings input[type=file] { width: 100%; min-width: 0; }
+@media (max-width: 600px) {
+  .bc-app .home01-hero .bc-hero-context { left: 12px; bottom: 16px; padding: 10px 16px 10px 10px; max-width: calc(100% - 80px); }
+  .bc-app .home01-hero .bc-orbit-player { right: 16px; bottom: 20px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .bc-app .home01-hero { height: 156px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home01-hero .bc-orbit-disc, .home01-hero .bc-orbit-player.is-playing .bc-orbit-disc { animation: none; }
+}

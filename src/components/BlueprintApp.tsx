@@ -22,6 +22,7 @@ import { materializeDueRecurringRecords } from '../lib/data';
 import './blueprint.css';
 import './experience/experience.css';
 import './home-v2/home.css';
+import './rc2/home-01.css';
 type View = 'Forecast' | 'Home' | 'Spending' | 'Investments' | 'Savings' | 'Net Worth' | 'Accounts & Cards' | 'Transactions' | 'Finance Calendar' | 'Recurring & Upcoming' | 'Income' | 'Reports' | 'Import Statement' | 'Settings' | 'Backup / Restore' | 'Categories' | 'Classification Rules' | 'Recently Deleted';
 type Modal = {
     kind: string;
@@ -88,7 +89,7 @@ export default function BlueprintApp() {
         lastFocus.current?.focus();
     } }, [modal, detail, recurringDetail]);
     useEffect(()=>{if(!modal&&!detail&&!recurringDetail&&!filtersOpen)return;const before=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.body.style.overflow=before}},[!!modal,!!detail,!!recurringDetail,filtersOpen]);
-    const media=useLocalMedia({home:view==='Home',muted:store?.preferences.muted??true,volume:store?.preferences.volume??.4,onMuted:muted=>update(s=>{s.preferences.muted=muted}),onError:setError});
+    const media=useLocalMedia({home:view==='Home',volume:store?.preferences.volume??.4,onError:setError});
     useEffect(()=>{window.scrollTo(0,0)},[view]);
     const clearTransactionFilters = () => {setSearch('');setAccountId('');setDay('');setFilterCategory('');setFilterGroup('');setFilterType('');setFilterStatus('');setMinAmount('');setMaxAmount('');setFrequency('');setDateFrom('');setDateTo('')};
     const navigate = (v: View) => { setView(v); setMenu(false); setAccountId(''); setDay(''); setSearch(''); setTab('Overview'); setFilterCategory(''); setFilterGroup(''); setFilterType(''); setFilterStatus(''); setMinAmount(''); setMaxAmount(''); setCalendar(false); setFrequency('');setDateFrom('');setDateTo(''); };
@@ -226,11 +227,11 @@ export default function BlueprintApp() {
         setFilterGroup(c.id);
     else
         setFilterCategory(c.id); }}><span>{c.name}</span><meter min="0" max={Math.max(summary.spending, value, 1)} value={Math.max(0, value)}/><strong>{money(value)}</strong></button>)}{!values.length && <p>No categorized actual spending yet.</p>}</section><section className="bc-card"><h2>Largest transactions</h2>{txList(rows.filter(t => t.type === 'expense' && actual(t)).sort((a, b) => b.amountMinor - a.amountMinor).slice(0, 5))}<h2>Frequent expenses</h2>{Object.entries(rows.filter(t => t.type === 'expense' && actual(t)).reduce<Record<string, number>>((map, t) => ({ ...map, [t.merchant || t.description]: (map[t.merchant || t.description] || 0) + 1 }), {})).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => <button key={name} onClick={() => { navigate('Transactions'); setSearch(name); }}>{name} · {count} transactions</button>)}</section></>; };
-    return <div className={`bc-app ${view==='Home'?'hv2-home':''}`}><audio ref={media.audio} src={media.track?.url} onError={()=>media.fail('audio')} loop/>
+    return <div className={`bc-app ${view==='Home'?'hv2-home':''}`}><audio ref={media.audio} src={media.track?.url} onPlay={media.onPlay} onPause={media.onPause} onError={()=>media.fail('audio')} loop preload="metadata"/>
  <header className="bc-header"><button aria-label="Feature menu" aria-controls="bc-navigation-drawer" aria-expanded={menu} onClick={()=>setMenu(!menu)}><Menu size={20}/></button><button className="bc-brand" onClick={()=>navigate('Home')}><strong>MY HOME FINANCE</strong><small>A CLEARER FINANCIAL PICTURE</small></button><button aria-label="Settings" onClick={()=>navigate('Settings')}><Settings size={20}/></button></header>
  <NavigationDrawer open={menu} current={view==='Spending'&&tab==='Budget'?'Budget':view} onClose={()=>setMenu(false)} onNavigate={v=>{if(v==='Quick Add'){setMenu(false);open('quick');return}navigate(v==='Budget'?'Spending':v==='Goals'?'Savings':v as View);if(v==='Budget')setTab('Budget')}}/>
  <main id="bc-main" data-workspace={view}>{view!=='Home'&&navigation.canBack&&!modal&&!detail&&!recurringDetail&&<button className="bc-back" aria-label="Back to previous context" onClick={navigation.back}><ArrowLeft size={18}/> Back</button>}{view!=='Home'&&<div className="bc-title"><div><p className="bc-eyebrow">YOUR FINANCIAL PICTURE</p><h1>{view}</h1></div>{!['Settings','Import Statement','Backup / Restore','Categories','Classification Rules','Recently Deleted','Savings','Investments','Accounts & Cards','Net Worth','Recurring & Upcoming','Forecast'].includes(view)&&periodControl}</div>}
- <HeroMedia media={media} home={view==='Home'} muted={s.preferences.muted}/>
+ <HeroMedia media={media} home={view==='Home'}/>
  {error && <p className="bc-alert" role="alert">{error}</p>}{notice && <p className="bc-notice" role="status">{notice}<button aria-label="Dismiss notification" onClick={() => setNotice('')}>×</button></p>}
  {view==='Home'&&<HomeCommandCenter store={s} onQuick={()=>open('quick')} onAssistant={()=>setAssistantOpen(true)} onNavigate={(v,tab)=>{navigate(v as View);if(tab){setTab(tab);if(tab==='Budget')setPeriod(today().slice(0,7))}if(v==='Spending'&&!tab){setPeriod(today().slice(0,7));setDateFrom((()=>{const d=new Date(`${today()}T12:00:00`);d.setDate(d.getDate()-6);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`})());setDateTo(today())}}} onDay={date=>{navigate('Spending');setCalendar(true);setPeriod(date.slice(0,7));setDay(date)}} onAddAccount={()=>open('account')} onRecurring={setRecurringDetail} onSnapshot={()=>update(s=>{s.netWorthSnapshots=s.netWorthSnapshots.filter(x=>x.date!==today());s.netWorthSnapshots.push({id:uid(),date:today(),valueMinor:netWorth(s).total})})} transactions={txList}/>}
  {view === 'Forecast'&&<Forecast store={s}/>}

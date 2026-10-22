@@ -266,7 +266,7 @@ for (const width of [320, 390, 768, 1440])
       }
       await page.getByRole("button", { name: "Settings", exact: true }).click();
       await page
-        .getByLabel("Home hero image or video")
+        .getByLabel("Add artwork")
         .setInputFiles("public/assets/heroes/home/home-01.webp");
       await page
         .getByRole("navigation", { name: "Primary" })
@@ -281,7 +281,7 @@ for (const width of [320, 390, 768, 1440])
       await expect(page.locator(".bc-hero-date")).toHaveText(
         "October 22, 2026",
       );
-      await expect(page.locator(".hv2-focus-words")).toContainText("focus");
+      await expect(page.locator(".hv2-focus-words")).toHaveCount(0);
       await expect(page.locator(".hv2-bottom").getByRole("button")).toHaveText([
         "Home",
         "Accounts",

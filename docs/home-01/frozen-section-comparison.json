@@ -1,0 +1,146 @@
+[
+  {
+    "width": 320,
+    "section": "bc-wealth-panel",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 320,
+    "section": "hv2-spending",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 320,
+    "section": "hv2-budget",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 320,
+    "section": "hv2-coming",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 320,
+    "section": "hv2-recent",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 320,
+    "section": "nav",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 390,
+    "section": "bc-wealth-panel",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 390,
+    "section": "hv2-spending",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 390,
+    "section": "hv2-budget",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 390,
+    "section": "hv2-coming",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 390,
+    "section": "hv2-recent",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 390,
+    "section": "nav",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 768,
+    "section": "bc-wealth-panel",
+    "pixel_identical": false,
+    "max_channel_mean_difference_0_to_255": 2.283730702475564e-05
+  },
+  {
+    "width": 768,
+    "section": "hv2-spending",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 768,
+    "section": "hv2-budget",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 768,
+    "section": "hv2-coming",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 768,
+    "section": "hv2-recent",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 768,
+    "section": "nav",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 1440,
+    "section": "bc-wealth-panel",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 1440,
+    "section": "hv2-spending",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 1440,
+    "section": "hv2-budget",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 1440,
+    "section": "hv2-coming",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 1440,
+    "section": "hv2-recent",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  },
+  {
+    "width": 1440,
+    "section": "nav",
+    "pixel_identical": true,
+    "max_channel_mean_difference_0_to_255": 0.0
+  }
+]

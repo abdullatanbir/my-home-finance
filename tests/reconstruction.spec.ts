@@ -130,11 +130,11 @@ test("hero hierarchy, circular player and viewport reveal financial content", as
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 844 });
     const hero = page.locator(".bc-hero"),
-      player = hero.getByRole("button", { name: "Play sound" });
+      player = hero.getByRole("button", { name: "Play music" });
     await expect(hero.locator("h1")).toHaveText("Wednesday");
     await expect(hero.locator(".bc-hero-date")).toHaveText("October 21, 2026");
     await expect(hero).not.toContainText("Welcome home.");
-    await expect(hero.locator(".bc-motivation")).not.toBeEmpty();
+    await expect(hero.locator(".bc-motivation")).toHaveCount(0);
     const h = (await hero.boundingBox())!,
       w = (await page.locator(".bc-wealth-panel").boundingBox())!,
       b = (await player.boundingBox())!;
@@ -305,7 +305,7 @@ for (const theme of ["dark", "light"])
       await page.getByRole("button", { name: "Settings", exact: true }).click();
       await page.getByLabel("Theme", { exact: true }).selectOption(theme);
       await page
-        .getByLabel("Home hero image or video")
+        .getByLabel("Add artwork")
         .setInputFiles("public/assets/heroes/home/home-01.webp");
       await primary(page, "Home").click();
       await expect(page.locator(".bc-hero img")).toHaveJSProperty(
@@ -359,23 +359,21 @@ test("compact media control coordinates sources, keyboard and reduced motion wit
 }) => {
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page
-    .getByLabel("Home hero image or video")
+    .getByLabel("Add artwork")
     .setInputFiles("tests/fixtures/rc2-hero.webm");
   await page
-    .getByLabel("Local MP3", { exact: true })
+    .getByLabel("Add music", { exact: true })
     .setInputFiles("tests/fixtures/rc2-ambient.mp3");
-  await page
-    .getByLabel("Sound source", { exact: true })
-    .selectOption("ambient");
+
   await primary(page, "Home").click();
   const hero = page.locator(".bc-hero");
   await expect(hero).not.toContainText("rc2-hero.webm");
   await expect(hero).not.toContainText("rc2-ambient.mp3");
-  const play = hero.getByRole("button", { name: "Play sound", exact: true });
+  const play = hero.getByRole("button", { name: "Play music", exact: true });
   await play.focus();
   await expect(play).toBeFocused();
   await page.keyboard.press("Enter");
-  const pause = hero.getByRole("button", { name: "Pause sound", exact: true });
+  const pause = hero.getByRole("button", { name: "Pause music", exact: true });
   await expect(pause).toHaveAttribute("aria-pressed", "true");
   await expect
     .poll(() =>
@@ -405,9 +403,10 @@ test("compact media control coordinates sources, keyboard and reduced motion wit
     .toBe(true);
   await pause.click();
   await expect(
-    hero.getByRole("button", { name: "Play sound", exact: true }),
+    hero.getByRole("button", { name: "Play music", exact: true }),
   ).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator("audio")).toHaveJSProperty("muted", true);
+  await expect(page.locator("audio")).toHaveJSProperty("paused", true);
 });
 test("Home recent activity returns to its original Home position", async ({
   page,

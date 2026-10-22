@@ -1,137 +1,117 @@
 import { useEffect, useRef, useState } from 'react';
 import { getMedia, setMedia } from '../../core/media';
-type Asset = {
-    url: string;
-    name: string;
-    type: string;
-};
-export function useLocalMedia({ home, muted, volume, onMuted, onError }: {
+type Asset = { url: string; name: string; type: string };
+
+// One mounted audio element is the only Home sound source. Legacy video and
+// sound-source records are retained on disk, but video is always visual-only.
+export function useLocalMedia({ home, volume, onError }: {
     home: boolean;
-    muted: boolean;
     volume: number;
-    onMuted: (m: boolean) => void;
     onError: (e: string) => void;
 }) {
-    const [track, setTrack] = useState<Asset | null>(null), [hero, setHero] = useState<Asset | null>(null), [source, setSource] = useState<'ambient' | 'video'>('ambient'), [playing, setPlaying] = useState(false), [blocked, setBlocked] = useState(false), [pending, setPending] = useState(0);
-    const audio = useRef<HTMLAudioElement>(null), video = useRef<HTMLVideoElement>(null), urls = useRef(new Set<string>());
-    const asset = (blob: Blob, fallback: string) => { const url = URL.createObjectURL(blob); urls.current.add(url); return { url, name: blob instanceof File ? blob.name : fallback, type: blob.type }; };
-    const release = (a: Asset | null) => { if (a) {
-        URL.revokeObjectURL(a.url);
-        urls.current.delete(a.url);
-    } };
-    useEffect(() => { let live = true; Promise.all([getMedia('track'), getMedia('hero'), getMedia('artwork'), getMedia('sound-source')]).then(async ([t, h, old, selected]) => { const saved = selected ? await selected.text() : 'ambient'; if (!live)
-        return; if (t)
-        setTrack(asset(t, 'Your ambient track')); if (h || old)
-        setHero(asset((h || old)!, 'Your hero visual')); if (saved === 'video')
-        setSource('video'); }).catch(e => onError(String(e))); return () => { live = false; urls.current.forEach(u => URL.revokeObjectURL(u)); urls.current.clear(); }; }, []);
-    const isVideo = !!hero?.type.startsWith('video/');
-    const effective = source === 'video' && !isVideo ? 'ambient' : source === 'ambient' && !track && isVideo ? 'video' : source;
-    useEffect(() => { const a = audio.current, v = video.current; let live = true; if (a) {
-        a.volume = volume;
-        a.muted = muted || effective !== 'ambient';
-        if (effective === 'ambient' && track) {
-            a.play().then(() => { if (live) {
-                setPlaying(true);
-                setBlocked(false);
-            } }).catch(() => { if (live) {
-                setPlaying(false);
-                setBlocked(true);
-            } });
-        }
-        else
-            a.pause();
-    } if (v) {
-        v.volume = volume;
-        v.muted = muted || effective !== 'video' || !home;
-        if (!home)
-            v.pause();
-        else if (!matchMedia('(prefers-reduced-motion: reduce)').matches)
-            v.play().then(() => { if (live && effective === 'video') {
-                setPlaying(true);
-                setBlocked(false);
-            } }).catch(() => { if (live && effective === 'video') {
-                setPlaying(false);
-                setBlocked(true);
-            } });
-    } return () => { live = false; }; }, [track?.url, hero?.url, source, muted, volume, home]);
-    useEffect(()=>{const query=matchMedia('(prefers-reduced-motion: reduce)');const listener=()=>{if(query.matches){video.current?.pause();if(effective==='video')setPlaying(false)}};query.addEventListener('change',listener);return()=>query.removeEventListener('change',listener)},[effective]);
-    const selectSource = async (next: 'ambient' | 'video') => {
-        setPending(n=>n+1);onError(''); if (next === 'video') {
-        if (audio.current) {
-            audio.current.muted = true;
-            audio.current.pause();
-        }
-    }
-    else if (video.current)
-        video.current.muted = true; setSource(next); try {
-        await setMedia('sound-source', new Blob([next], { type: 'text/plain' }));
-    }
-    catch (e) {
-        onError(String(e));
-    } finally {setPending(n=>n-1)} };
-    const toggle = () => { const next = blocked ? false : !muted; onMuted(next); const a = audio.current, v = video.current; if (effective === 'video') {
-        if (a) {
-            a.muted = true;
-            a.pause();
-        }
-        if (v) {
-            v.muted = next || !home;
-            v.play().then(() => { setPlaying(true); setBlocked(false); }).catch(() => { setBlocked(true); setPlaying(false); });
-        }
-    }
-    else {
-        if (v)
+    const [track, setTrack] = useState<Asset | null>(null);
+    const [hero, setHero] = useState<Asset | null>(null);
+    const [playing, setPlaying] = useState(false), [blocked, setBlocked] = useState(false);
+    const [pending, setPending] = useState(0), [loaded, setLoaded] = useState(false);
+    const audio = useRef<HTMLAudioElement>(null), video = useRef<HTMLVideoElement>(null);
+    const urls = useRef(new Set<string>()), generation = useRef(0), intended = useRef(false);
+    const operation = useRef(false);
+    const asset = (blob: Blob, fallback: string): Asset => {
+        const url = URL.createObjectURL(blob); urls.current.add(url);
+        return { url, name: blob instanceof File ? blob.name : fallback, type: blob.type };
+    };
+    const release = (a: Asset | null) => {
+        if (a) { URL.revokeObjectURL(a.url); urls.current.delete(a.url); }
+    };
+    const stop = () => {
+        generation.current++; intended.current = false;
+        if (audio.current) { audio.current.pause(); audio.current.muted = true; }
+        setPlaying(false); setBlocked(false);
+    };
+    useEffect(() => {
+        let live = true;
+        Promise.all([getMedia('track'), getMedia('hero'), getMedia('artwork')]).then(([t, h, old]) => {
+            if (!live) return;
+            if (t) setTrack(asset(t, 'Your music'));
+            if (h || old) setHero(asset((h || old)!, 'Your artwork'));
+        }).catch(e => { if (live) onError(String(e)); }).finally(() => { if (live) setLoaded(true); });
+        return () => {
+            live = false; generation.current++; intended.current = false;
+            audio.current?.pause(); video.current?.pause();
+            urls.current.forEach(u => URL.revokeObjectURL(u)); urls.current.clear();
+        };
+    }, []);
+    // Loading, refreshing, navigation and media replacement never imply play.
+    useEffect(() => { stop(); }, [home, track?.url]);
+    useEffect(() => {
+        if (audio.current) audio.current.volume = Math.max(0, Math.min(1, volume));
+    }, [volume, track?.url]);
+    useEffect(() => {
+        const v = video.current;
+        if (!v) return;
+        const query = matchMedia('(prefers-reduced-motion: reduce)');
+        const sync = () => {
             v.muted = true;
-        if (a) {
-            a.muted = next;
-            a.play().then(() => { setPlaying(true); setBlocked(false); }).catch(() => { setBlocked(true); setPlaying(false); });
-        }
-    } };
-    const upload = async (key: 'track' | 'hero', file: File) => { setPending(n => n + 1); onError(''); try {
-        if (key === 'track' && !(/audio\//.test(file.type) || /\.mp3$/i.test(file.name)))
-            throw Error('Choose an audio file.');
-        if (key === 'hero' && !/^(image|video)\//.test(file.type))
-            throw Error('Choose an image or video supported by your browser.');
-        await setMedia(key, file);
-        if (key === 'track') {
-            release(track);
-            setTrack(asset(file, file.name));
-        }
-        else {
-            release(hero);
-            setHero(asset(file, file.name));
-        }
-    }
-    catch (e) {
-        onError(String(e));
-    }
-    finally {
-        setPending(n => n - 1);
-    } };
-    const remove = async (key: 'track' | 'hero') => { setPending(n => n + 1); onError(''); try {
-        await setMedia(key);
-        if (key === 'hero') {
-            await setMedia('artwork');
-            release(hero);
-            setHero(null);
-            if (video.current)
-                video.current.pause();
-        }
-        else {
-            audio.current?.pause();
-            release(track);
-            setTrack(null);
-        }
-        setPlaying(false);
-        setBlocked(false);
-    }
-    catch (e) {
-        onError(String(e));
-    }
-    finally {
-        setPending(n => n - 1);
-    } };
-    const fail = (kind: 'audio' | 'video') => { setPlaying(false); setBlocked(true); onError(`This ${kind} could not be played. Choose a file supported by this browser.`); };
-    return { audio, video, track, hero, isVideo, source, effective, playing, blocked, busy: pending > 0, selectSource, toggle, upload, remove, fail };
+            if (!home || query.matches) v.pause();
+            else void v.play().catch(() => { /* A silent still frame is valid. */ });
+        };
+        sync(); query.addEventListener('change', sync);
+        return () => { query.removeEventListener('change', sync); v.pause(); v.muted = true; };
+    }, [home, hero?.url]);
+    const toggle = () => {
+        const a = audio.current;
+        if (!home || !track || !a || operation.current) return;
+        if (intended.current) { stop(); return; }
+        // Explicit user gesture only. A late play promise must not revive a
+        // removed/replaced track or resume playback after leaving Home.
+        const token = ++generation.current;
+        intended.current = true; setBlocked(false);
+        if (video.current) video.current.muted = true;
+        a.muted = false;
+        void a.play().then(() => {
+            if (token === generation.current && intended.current) setPlaying(!a.paused);
+        }).catch(() => {
+            if (token === generation.current) {
+                intended.current = false; a.muted = true; setPlaying(false); setBlocked(true);
+            }
+        });
+    };
+    const upload = async (key: 'track' | 'hero', file: File) => {
+        if (operation.current) return;
+        operation.current = true; setPending(n => n + 1); onError('');
+        try {
+            if (key === 'track' && !(file.type.startsWith('audio/') || /\.mp3$/i.test(file.name))) throw Error('Choose an audio file, such as MP3.');
+            if (key === 'hero' && !/^(image|video)\//.test(file.type)) throw Error('Choose an image or silent video supported by your browser.');
+            if (key === 'track') stop();
+            await setMedia(key, file);
+            if (key === 'track') { release(track); setTrack(asset(file, file.name)); }
+            else { video.current?.pause(); release(hero); setHero(asset(file, file.name)); }
+        } catch (e) { onError(String(e)); }
+        finally { operation.current = false; setPending(n => n - 1); }
+    };
+    const remove = async (key: 'track' | 'hero') => {
+        if (operation.current) return;
+        operation.current = true; setPending(n => n + 1); onError('');
+        try {
+            if (key === 'track') stop();
+            await setMedia(key);
+            if (key === 'hero') {
+                await setMedia('artwork'); video.current?.pause(); release(hero); setHero(null);
+            } else { release(track); setTrack(null); }
+        } catch (e) { onError(String(e)); }
+        finally { operation.current = false; setPending(n => n - 1); }
+    };
+    const fail = (kind: 'audio' | 'video') => {
+        if (kind === 'audio') { stop(); setBlocked(true); }
+        onError(`This ${kind} could not be played. Choose a file supported by this browser.`);
+    };
+    const onPause = () => {
+        if (audio.current?.paused) { generation.current++; intended.current = false; setPlaying(false); }
+    };
+    const onPlay = () => {
+        if (!intended.current) { audio.current?.pause(); return; }
+        setPlaying(true);
+    };
+    return { audio, video, track, hero, isVideo: !!hero?.type.startsWith('video/'), playing, blocked, busy: !loaded || pending > 0, toggle, upload, remove, fail, onPause, onPlay };
 }
 export type MediaController = ReturnType<typeof useLocalMedia>;

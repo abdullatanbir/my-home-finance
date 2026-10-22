@@ -84,7 +84,7 @@ test('future daily bars are labelled and disabled, and mobile chart scroll stays
 test('Home sections follow the requested reading order', async ({ page }) => {
     await page.getByRole('navigation', { name: 'Primary' }).getByRole('button', { name: 'Home', exact: true }).click();
     await expect(page.locator('.bc-dashboard').getByRole('heading', { level: 2 })).toHaveText([
-        'Your wealth, in perspective', 'Spent · Last 7 Days', 'Your monthly budget', 'Coming up', 'Recent activity',
+        'NET WORTH', 'SPENT LAST 7 DAYS', 'BUDGET IN FEBRUARY', 'Coming Up', 'Recent Activity',
     ]);
     await page.screenshot({ path: 'qa-output/reconstruction-home-desktop.png', fullPage: true });
 });

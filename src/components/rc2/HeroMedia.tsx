@@ -29,7 +29,7 @@ export default function HeroMedia({
     "Build your future.",
   ];
   return (
-    <section className="bc-hero" hidden={!home} aria-label="Home hero">
+    <section className="bc-hero" hidden={!home} aria-label="Daily Focus">
       <div className="bc-hero-visual" aria-hidden="true">
         {media.hero &&
           (media.isVideo ? (
@@ -51,8 +51,11 @@ export default function HeroMedia({
         <p className="bc-eyebrow">{greeting}</p>
         <h1>{now.toLocaleDateString("en-US", { weekday: "long" })}</h1>
         <p className="bc-hero-date">
-          {now.toLocaleDateString("en-US", { month: "long", day: "numeric" })} ·{" "}
-          {now.getFullYear()}
+          {now.toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}
         </p>
         <p className="bc-motivation">
           {
@@ -67,6 +70,10 @@ export default function HeroMedia({
             ]
           }
         </p>
+      </div>
+      <div className="hv2-focus-words" aria-label="Daily focus words">
+        <span>focus</span>
+        <strong>build.</strong>
       </div>
       <button
         className={`bc-orbit-player ${playing ? "is-playing" : ""}`}

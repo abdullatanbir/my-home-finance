@@ -1,0 +1,5 @@
+<!doctype html><html data-bc-theme="dark"><head><meta charset="utf-8"><title>Assistant adapter test harness</title></head><body class="bc-body"><div id="root"></div><script type="module">
+import React from 'react';import {createRoot} from 'react-dom/client';import Assistant from '/src/components/home-v2/Assistant.tsx';import '/src/components/blueprint.css';import '/src/components/home-v2/home.css';
+const root=createRoot(document.getElementById('root'));window.renderAssistant=(mode)=>root.render(React.createElement('div',{className:'bc-app'},React.createElement(Assistant,{key:mode,open:true,onClose:()=>{},adapter:mode==='unavailable'?undefined:{ask:({question,signal})=>new Promise((resolve,reject)=>{window.lastQuestion=question;window.complete=resolve;window.fail=()=>reject(Error('test failure'));signal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')));})}})));
+window.renderAssistant('unavailable');
+</script></body></html>

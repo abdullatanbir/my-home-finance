@@ -16,7 +16,7 @@ test('production PWA precaches app, launches offline and activates an updated sh
   await page.evaluate(async()=>{const reg=await navigator.serviceWorker.getRegistration();await new Promise<void>(resolve=>{navigator.serviceWorker.addEventListener('controllerchange',()=>resolve(),{once:true});reg!.waiting!.postMessage({type:'ACTIVATE_UPDATE'})})});
   await expect.poll(()=>page.evaluate(async()=>(await caches.keys()).filter(n=>n.startsWith('my-home-finance-')))).toEqual([expect.stringContaining('-upgrade')]);
   await context.setOffline(true);await page.reload();expect(await page.evaluate(async()=> (await fetch('/my-home-finance/assets/heroes/home/home-01.webp')).ok)).toBe(true);await expect(page.locator('.bc-hero h1')).toBeVisible();
-  await page.getByRole('navigation',{name:'Primary'}).getByRole('button',{name:'Spending',exact:true}).click();await expect(page.getByRole('heading',{name:'Spending',exact:true})).toBeVisible();
+  await page.getByRole('navigation',{name:'Primary'}).getByRole('button',{name:'Spending',exact:true}).click();await expect(page.getByRole('heading',{name:'Spending',exact:true})).toBeVisible();await page.getByRole('navigation',{name:'Primary'}).getByRole('button',{name:'Home',exact:true}).click();await page.getByRole('button',{name:'Open financial copilot'}).click();await expect(page.getByRole('dialog',{name:'Financial copilot'})).toContainText('AI not connected');await page.getByRole('button',{name:'Close assistant'}).click();await page.getByRole('button',{name:'Forecast',exact:true}).click();await expect(page.getByRole('heading',{name:'Cash flow & net worth scenarios'})).toBeVisible();
  } finally {writeFileSync('dist/sw.js',original);await context.setOffline(false)}
 });
 

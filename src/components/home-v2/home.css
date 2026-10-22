@@ -1,0 +1,904 @@
+.bc-body:has(.hv2-home) {
+  background: #050505;
+}
+.hv2-home {
+  background: #050505;
+  min-height: 100dvh;
+  --bc-bg: #050505;
+  --bc-card: #111214;
+  --bc-inset: #17181b;
+  --bc-border: #292a2e;
+  --bc-text: #f6f5f8;
+  --bc-muted: #a2a1aa;
+  --bc-accent: #b59af8;
+  --bc-positive: #86d9b3;
+  --bc-negative: #fb8f9f;
+}
+.hv2-home .bc-header {
+  max-width: 1060px;
+  height: 76px;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  gap: 14px;
+  padding: 14px 28px;
+}
+.hv2-home .bc-brand {
+  text-align: center !important;
+  justify-self: center;
+}
+.hv2-home .bc-brand strong {
+  letter-spacing: 2.4px;
+  font-size: 12px;
+}
+.hv2-home .bc-brand small {
+  display: none;
+}
+.hv2-home main {
+  max-width: 1000px;
+  padding: 12px 28px 150px;
+}
+.hv2-home .bc-hero {
+  padding: 28px;
+  min-height: 238px;
+  border: 1px solid #ffffff20;
+  border-radius: 28px;
+  margin-bottom: 26px;
+  gap: 24px;
+}
+.hv2-home .bc-hero-context {
+  backdrop-filter: blur(13px);
+  background: linear-gradient(115deg, #14232299, #16212233);
+  border: 1px solid #ffffff22;
+  border-radius: 17px;
+  min-width: 220px;
+  padding: 17px 24px;
+  margin: 0;
+  max-width: 65%;
+}
+.hv2-home .bc-hero-context h1 {
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 500;
+  letter-spacing: -1.5px;
+}
+.hv2-home .bc-hero-context .bc-hero-date {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.hv2-home .bc-hero-context .bc-motivation {
+  margin-top: 12px;
+  font-size: 12px;
+}
+.hv2-focus-words {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fff;
+  text-shadow: 0 3px 20px #0008;
+  font-size: clamp(32px, 5vw, 60px);
+  line-height: 1.02;
+  letter-spacing: -2px;
+  font-style: italic;
+  display: flex;
+  flex-direction: column;
+  font-family: Georgia, serif;
+}
+.hv2-focus-words strong {
+  font-weight: 400;
+}
+.hv2-home .bc-orbit-player {
+  position: absolute;
+  left: 28px;
+  bottom: 20px;
+  transform: translateX(260px);
+}
+.hv2-home .hv2-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.hv2-dashboard > .bc-card {
+  width: 100%;
+  margin: 0;
+  padding: 30px;
+  border: 1px solid #292a2e;
+  border-radius: 26px;
+  background: linear-gradient(125deg, #17181b, #101113 70%);
+  box-shadow: 0 20px 65px #0002;
+  height: auto;
+}
+.hv2-home .hv2-dashboard h2 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.hv2-home .hv2-spending h2,
+.hv2-home .hv2-budget h2,
+.hv2-home .bc-wealth-panel h2 {
+  font-size: 12px;
+  letter-spacing: 2.1px;
+  font-weight: 600;
+}
+.hv2-home .bc-eyebrow {
+  font-size: 9px;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.hv2-home .hv2-dashboard > .bc-wealth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding: 30px;
+}
+.hv2-home .bc-wealth-panel > .bc-section-head {
+  order: 0;
+  max-width: 65%;
+}
+.hv2-home .bc-wealth-panel > .bc-section-head .bc-text-button {
+  display: none;
+}
+.hv2-home .bc-wealth-number {
+  order: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 20px 0 10px;
+  gap: 12px;
+}
+.hv2-home .bc-wealth-number > strong {
+  font-size: clamp(46px, 7vw, 72px);
+  font-weight: 600;
+  letter-spacing: -3.5px;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.hv2-home .bc-wealth-number > span {
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.hv2-home .bc-wealth-number small {
+  font-size: 10px;
+}
+.hv2-home .ex-position-totals {
+  order: 2;
+  margin: 12px 0 20px;
+  gap: 30px;
+}
+.hv2-home .ex-position-totals strong {
+  font-size: 16px;
+}
+.hv2-home .bc-wealth-panel > .bc-trend,
+.hv2-home .bc-wealth-panel > .bc-chart-empty {
+  order: 3;
+  margin-top: 0;
+}
+.hv2-home .bc-trend-svg {
+  height: 220px;
+}
+.hv2-home .bc-chart-empty {
+  height: 160px;
+}
+.hv2-home .bc-chart-readout {
+  background: none;
+  padding: 7px 0;
+  color: var(--bc-muted);
+}
+.hv2-home .bc-wealth-panel > .bc-range-control {
+  order: 4;
+  justify-content: flex-start;
+  gap: 12px;
+  margin: 6px 0 18px;
+}
+.hv2-home .bc-range-control button {
+  flex: 0 1 64px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+.hv2-home .bc-wealth-panel > .bc-wealth-context {
+  order: 5;
+  display: flex;
+  margin: 0;
+  border-top: 1px solid var(--bc-border);
+  padding-top: 16px;
+  gap: 8px;
+}
+.hv2-home .bc-wealth-context button {
+  font-size: 12px;
+  flex: 1;
+}
+.hv2-home .bc-wealth-context [aria-pressed="true"] {
+  background: #29252f !important;
+  color: #e3d4ff !important;
+}
+.hv2-home .bc-wealth-panel > .bc-period-context {
+  order: 6;
+  margin: 12px 0;
+  font-size: 10px;
+  text-align: left;
+}
+.hv2-home .bc-wealth-panel > .bc-primary {
+  order: 7;
+  align-self: flex-start;
+  margin-top: 5px;
+  background: #e9dfff !important;
+  color: #251935 !important;
+  padding: 12px 18px;
+  border-radius: 12px;
+}
+.hv2-home .bc-wealth-panel > .bc-wealth-foot {
+  order: 8;
+  width: 100%;
+  margin-top: 20px;
+  padding-top: 14px;
+  box-shadow: none;
+}
+.hv2-home .hv2-forecast {
+  position: absolute;
+  right: 28px;
+  top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #242128;
+  border-color: #3b3346;
+  font-size: 12px;
+  color: #deccff;
+}
+.hv2-metric {
+  display: block;
+  font-size: clamp(34px, 5vw, 48px);
+  font-weight: 600;
+  letter-spacing: -2px;
+  line-height: 1.15;
+  margin: 20px 0 10px;
+  overflow-wrap: anywhere;
+}
+.hv2-caption {
+  font-size: 12px !important;
+  color: var(--bc-muted);
+  line-height: 1.6;
+  margin: 8px 0 16px;
+}
+.hv2-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 25px 0 18px;
+}
+.hv2-days button {
+  border: 1px solid transparent;
+  background: #1b1c20;
+  min-width: 0;
+  padding: 16px 4px;
+  text-align: center;
+  border-radius: 14px;
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.85, 0.2, 1.2),
+    background 0.2s;
+}
+.hv2-days button:hover {
+  transform: translateY(-3px);
+}
+.hv2-days [aria-pressed="true"] {
+  background: #dbc4ff;
+  color: #261838;
+  border-color: #e6d4ff;
+  box-shadow: 0 5px 20px #b78bec1c;
+}
+.hv2-days span {
+  display: block;
+  font-size: 12px;
+  color: #b6b2bd;
+}
+.hv2-days strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 10px 0 5px;
+  overflow-wrap: anywhere;
+}
+.hv2-days small {
+  font-size: 10px;
+}
+.hv2-days [aria-pressed="true"] span,
+.hv2-days [aria-pressed="true"] small {
+  color: #49365a;
+}
+.hv2-days [aria-pressed="true"] .bc-positive {
+  color: #185536;
+}
+.hv2-evidence-head {
+  border-top: 1px solid var(--bc-border);
+  padding-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.hv2-evidence-head > span {
+  font-size: 11px;
+  color: var(--bc-muted);
+}
+.hv2-evidence-head button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.hv2-home .hv2-link {
+  border: 0;
+  background: none;
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #cbb4f4;
+  font-size: 12px;
+  margin-top: 12px;
+}
+.hv2-home .hv2-budget .hv2-caption:first-of-type {
+  margin: 24px 0 4px;
+}
+.hv2-home .hv2-budget .hv2-metric {
+  margin-top: 5px;
+}
+.hv2-home .hv2-budget progress {
+  margin-top: 20px;
+  height: 9px;
+  accent-color: #b899ef;
+}
+.hv2-budget-summary {
+  font-size: 13px;
+  margin-top: 12px;
+}
+.hv2-budget-summary strong {
+  color: var(--bc-text);
+  font-weight: 500;
+}
+.hv2-health {
+  font-size: 10px;
+  padding: 5px 10px;
+  border-radius: 40px;
+  background: #24252b;
+  border: 1px solid #36363d;
+  color: #c5c2ce;
+}
+.health-healthy {
+  color: #9be1bc;
+  background: #1a2c24;
+  border-color: #2c4438;
+}
+.health-caution {
+  color: #f6d09c;
+  background: #30281c;
+  border-color: #57442b;
+}
+.health-risk,
+.health-exceeded {
+  color: #ffadba;
+  background: #311f27;
+  border-color: #55303d;
+}
+.hv2-home .bc-projection-row,
+.hv2-home .bc-row {
+  min-height: 78px;
+}
+.hv2-home .bc-row strong {
+  font-size: 13px;
+}
+.hv2-home .bc-row small {
+  font-size: 10px;
+}
+.hv2-home .bc-row > span:last-child {
+  max-width: 38%;
+}
+.hv2-home .bc-icon {
+  background: #232329;
+  border-radius: 12px;
+}
+.hv2-guidance {
+  padding: 20px 8px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 24px;
+}
+.hv2-guidance > div {
+  flex: 1;
+  min-width: 180px;
+}
+.hv2-guidance p {
+  font-size: 13px;
+  margin: 0;
+}
+.hv2-guidance .bc-eyebrow {
+  font-size: 9px;
+  margin-bottom: 8px;
+}
+.hv2-guidance > .hv2-link {
+  flex-basis: 100%;
+  margin: 0;
+}
+.hv2-guidance > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bc-app .hv2-bottom {
+  max-width: 580px;
+  padding: 7px;
+  border-radius: 22px;
+  padding-bottom: max(7px, env(safe-area-inset-bottom));
+  background: var(--bc-card);
+}
+.bc-app .hv2-bottom button {
+  font-size: 10px;
+  min-height: 55px;
+}
+.bc-app .hv2-bottom [aria-current="page"] {
+  background: color-mix(in srgb, var(--bc-purple) 17%, var(--bc-card));
+  border-radius: 14px;
+  color: var(--bc-purple);
+}
+.bc-app .hv2-ai-fab {
+  position: fixed;
+  right: max(22px, calc((100vw - 1060px) / 2));
+  bottom: calc(108px + env(safe-area-inset-bottom));
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 19px;
+  background: linear-gradient(135deg, #d1b8fc, #a986ee);
+  border-color: #d4b9ff;
+  color: #2d1850;
+  z-index: 16;
+  box-shadow: 0 8px 30px #0008;
+  transition: transform 0.25s cubic-bezier(0.2, 0.85, 0.2, 1.2);
+}
+.hv2-ai-fab:hover {
+  transform: translateY(-3px);
+}
+.bc-app dialog.hv2-assistant {
+  position: fixed;
+  inset: 12px 12px 12px auto;
+  margin: 0;
+  width: min(460px, calc(100vw - 24px));
+  max-height: none;
+  height: calc(100dvh - 24px);
+  border-radius: 24px;
+  padding: 26px;
+  background: var(--bc-card);
+  animation: hv2-panel-in 0.38s cubic-bezier(0.2, 0.85, 0.2, 1.12);
+}
+.hv2-ai-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hv2-ai-title > svg {
+  color: var(--bc-purple);
+  flex-shrink: 0;
+}
+.hv2-ai-title h2 {
+  font-size: 17px;
+}
+.hv2-ai-title .bc-eyebrow {
+  font-size: 8px;
+}
+.hv2-assistant p {
+  font-size: 13px;
+}
+.hv2-ai-connection {
+  font-size: 11px;
+  color: var(--bc-purple);
+  padding: 6px 10px;
+  border: 1px solid var(--bc-border);
+  border-radius: 30px;
+  display: inline-block;
+}
+.hv2-ai-disclosure {
+  font-size: 11px !important;
+  color: var(--bc-muted);
+}
+.hv2-ai-prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 24px 0;
+}
+.hv2-ai-prompts button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  font-size: 12px;
+  background: var(--bc-inset);
+  padding: 14px;
+}
+.hv2-ai-prompts svg {
+  flex-shrink: 0;
+}
+.hv2-assistant form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+.hv2-assistant label {
+  font-size: 12px;
+}
+.hv2-assistant textarea {
+  min-height: 95px;
+  resize: vertical;
+  width: 100%;
+  background: var(--bc-inset);
+  border: 1px solid var(--bc-border);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--bc-text);
+}
+.hv2-assistant form button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+.hv2-assistant > small {
+  margin-top: 16px;
+  font-size: 10px;
+}
+.hv2-ai-message {
+  background: var(--bc-inset);
+  border: 1px solid var(--bc-border);
+  padding: 16px;
+  border-radius: 12px;
+  white-space: pre-wrap;
+}
+.hv2-ai-message h3 {
+  font-size: 15px;
+}
+.hv2-forecast-page label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+.hv2-forecast-page input,
+.hv2-forecast-page select {
+  padding: 12px;
+  min-width: 0;
+  width: 100%;
+  color: var(--bc-text);
+  background: var(--bc-inset);
+  border: 1px solid var(--bc-border);
+  border-radius: 9px;
+}
+.hv2-scenario-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 28px 0;
+}
+.hv2-scenario-metrics > span {
+  font-size: 12px;
+  color: var(--bc-muted);
+}
+.hv2-scenario-metrics strong {
+  display: block;
+  font-size: 23px;
+  margin-top: 6px;
+  color: var(--bc-text);
+  overflow-wrap: anywhere;
+}
+.hv2-scenario-table {
+  overflow-x: auto;
+}
+.hv2-scenario-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.hv2-scenario-table caption {
+  text-align: left;
+  padding: 12px 0;
+  color: var(--bc-muted);
+}
+.hv2-scenario-table th,
+.hv2-scenario-table td {
+  padding: 12px 5px;
+  text-align: left;
+  border-bottom: 1px solid var(--bc-border);
+  font-weight: 400;
+}
+.hv2-scenario-table thead th {
+  color: var(--bc-muted);
+}
+@keyframes hv2-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (max-width: 600px) {
+  .hv2-home .bc-header {
+    height: 62px;
+    padding: 9px 16px;
+    gap: 8px;
+  }
+  .hv2-home .bc-brand strong {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+  }
+  .hv2-home main {
+    padding: 8px 14px 145px;
+  }
+  .hv2-home .bc-hero {
+    min-height: 220px;
+    padding: 20px 16px;
+    border-radius: 23px;
+    margin-bottom: 20px;
+  }
+  .hv2-home .bc-hero-context {
+    max-width: calc(100% - 80px);
+    min-width: 0;
+    padding: 13px 10px;
+    border-radius: 13px;
+  }
+  .hv2-home .bc-hero-context h1 {
+    font-size: clamp(24px, 7vw, 32px);
+    letter-spacing: -1px;
+  }
+  .hv2-home .bc-hero-context .bc-hero-date {
+    font-size: 11px;
+  }
+  .hv2-home .bc-hero-context .bc-motivation {
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .hv2-home .bc-orbit-player {
+    transform: none;
+    left: 20px;
+    bottom: 14px;
+  }
+  .hv2-focus-words {
+    right: 17px;
+    top: auto;
+    bottom: 27px;
+    transform: none;
+    font-size: 34px;
+    letter-spacing: -1.5px;
+  }
+  .hv2-home .hv2-dashboard {
+    gap: 18px;
+  }
+  .hv2-home .hv2-dashboard > .bc-card,
+  .hv2-home .hv2-dashboard > .bc-wealth-panel {
+    padding: 20px;
+    border-radius: 23px;
+  }
+  .hv2-home .hv2-dashboard h2 {
+    font-size: 17px;
+  }
+  .hv2-home .hv2-spending h2,
+  .hv2-home .hv2-budget h2,
+  .hv2-home .bc-wealth-panel h2 {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+  }
+  .hv2-home .bc-wealth-panel > .bc-section-head {
+    max-width: 60%;
+  }
+  .hv2-home .bc-wealth-panel .bc-eyebrow {
+    font-size: 8px;
+    max-width: 130px;
+    line-height: 1.7;
+  }
+  .hv2-home .hv2-forecast {
+    top: 20px;
+    right: 18px;
+    padding: 8px 9px;
+    font-size: 11px;
+    gap: 5px;
+  }
+  .hv2-home .bc-wealth-number {
+    margin-top: 22px;
+  }
+  .hv2-home .bc-wealth-number > strong {
+    font-size: 46px;
+    letter-spacing: -2.5px;
+  }
+  .hv2-home .bc-wealth-number > span {
+    font-size: 11px;
+  }
+  .hv2-home .bc-trend-svg {
+    height: 155px;
+  }
+  .hv2-home .bc-range-control {
+    gap: 4px !important;
+  }
+  .hv2-home .bc-range-control button {
+    flex: 1;
+    font-size: 11px;
+    padding: 6px;
+  }
+  .hv2-home .bc-wealth-context {
+    gap: 2px !important;
+  }
+  .hv2-home .bc-wealth-context button {
+    font-size: 11px;
+    padding: 7px 4px;
+  }
+  .hv2-metric {
+    font-size: 38px;
+    letter-spacing: -1.5px;
+  }
+  .hv2-days {
+    gap: 4px;
+    margin-top: 20px;
+  }
+  .hv2-days button {
+    padding: 12px 2px;
+    border-radius: 10px;
+  }
+  .hv2-days span {
+    font-size: 10px;
+  }
+  .hv2-days strong {
+    font-size: 10px;
+    letter-spacing: -0.4px;
+    margin: 8px 0;
+  }
+  .hv2-days small {
+    font-size: 9px;
+  }
+  .hv2-home .hv2-link {
+    font-size: 11px;
+  }
+  .hv2-home .bc-row strong {
+    font-size: 12px;
+  }
+  .hv2-home .bc-row small {
+    font-size: 9px;
+  }
+  .hv2-home .bc-row {
+    gap: 8px;
+  }
+  .hv2-guidance {
+    padding: 12px 3px;
+  }
+  .hv2-guidance p {
+    font-size: 12px;
+  }
+  .bc-app .hv2-ai-fab {
+    right: 18px;
+    width: 50px;
+    height: 50px;
+    border-radius: 17px;
+    bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+  .bc-app dialog.hv2-assistant {
+    inset: auto 0 0;
+    margin: 0;
+    width: 100%;
+    height: 85dvh;
+    max-height: 85dvh;
+    border-radius: 24px 24px 0 0;
+    padding: 22px 18px max(24px, env(safe-area-inset-bottom));
+    animation: hv2-sheet-in 0.38s cubic-bezier(0.2, 0.85, 0.2, 1.12);
+  }
+  .hv2-scenario-metrics {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .hv2-assistant textarea {
+    font-size: 16px;
+  }
+  .hv2-home .bc-bottom {
+    width: calc(100% - 24px);
+  }
+  .hv2-health {
+    font-size: 9px;
+    padding: 4px 7px;
+  }
+}
+@keyframes hv2-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv2-home *,
+  .hv2-assistant {
+    animation: none !important;
+    transition: none !important;
+  }
+  .hv2-days button:hover,
+  .hv2-ai-fab:hover {
+    transform: none;
+  }
+}
+/* Day amounts retain readable numeric sizes and scroll inside the card on phones. */
+.hv2-days {
+  grid-template-columns: repeat(7, minmax(max-content, 1fr));
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 8px;
+  scroll-padding: 4px;
+}
+.hv2-days button {
+  min-width: 68px;
+  scroll-snap-align: center;
+}
+.hv2-days strong {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 600px) {
+  .hv2-days button {
+    padding: 14px 8px;
+    min-width: 66px;
+  }
+  .hv2-days strong {
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+  .hv2-days span {
+    font-size: 11px;
+  }
+  .hv2-days small {
+    font-size: 10px;
+  }
+}
+
+/* Sampled damped spring; animation stays on transform/opacity. */
+.bc-app {
+  --hv2-spring: linear(
+    0 0%,
+    0.1368 5%,
+    0.4264 10%,
+    0.7279 15%,
+    0.961 20%,
+    1.0986 25%,
+    1.1496 30%,
+    1.1404 35%,
+    1.1005 40%,
+    1.0536 45%,
+    1.0145 50%,
+    0.9895 55%,
+    0.9783 60%,
+    0.9776 65%,
+    0.9828 70%,
+    0.9899 75%,
+    0.9963 80%,
+    1.0007 85%,
+    1.003 90%,
+    1.0035 95%,
+    1 100%
+  );
+}
+.bc-app dialog.hv2-assistant {
+  animation-timing-function: var(--hv2-spring);
+}
+/* Avoid repainting a full-page blur during the copilot spring transition. */
+.bc-app dialog.hv2-assistant::backdrop {
+  backdrop-filter: none;
+  background: #000b;
+}
+@media (max-width: 600px) {
+  .bc-app dialog.hv2-assistant {
+    max-width: 100vw;
+  }
+}

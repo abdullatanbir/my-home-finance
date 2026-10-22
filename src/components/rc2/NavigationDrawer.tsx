@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { X, ArrowUpRight } from 'lucide-react';
-const groups = [['Overview', 'Home', 'Net Worth'], ['Finance', 'Accounts & Cards', 'Transactions', 'Budget', 'Finance Calendar', 'Recurring & Upcoming', 'Reports'], ['Personal', 'Income', 'Savings', 'Investments'], ['Tools', 'Import Statement'], ['System', 'Backup / Restore', 'Settings']];
+const groups = [['Overview', 'Home', 'Net Worth'], ['Finance', 'Accounts & Cards', 'Transactions', 'Budget', 'Finance Calendar', 'Recurring & Upcoming', 'Reports'], ['Personal', 'Income', 'Goals', 'Savings', 'Investments'], ['Tools', 'Quick Add', 'Import Statement'], ['System', 'Backup / Restore', 'Settings']];
 export default function NavigationDrawer({ open, current, onClose, onNavigate }: {
     open: boolean;
     current: string;

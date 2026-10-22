@@ -33,6 +33,12 @@ If Chromium is already installed, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to i
 
 `npm run build` performs the repository's TypeScript project build and may refresh the tracked generated `tsconfig.tsbuildinfo`. To type-check and bundle without refreshing that metadata, use `npm exec tsc -- --noEmit` followed by `npm exec vite -- build`.
 
+## Home design v2 candidate
+
+`home-page-design-candidate` is an isolated Home experiment based on the published reconstruction at `8909380a43f559e195842cc145e49df154be69e9`. It adds the ordered dark Home narrative, editorial Daily Focus card, five-range Net Worth view, seven-day spending tiles, budget-health states, local forecasting scenarios, and a safe copilot sheet/panel. Primary navigation is Home / Accounts / Spending / Budget / AI. Existing financial semantics and other workspaces remain intact.
+
+The application has no configured AI provider: it sends no financial data or questions externally and does not invent answers. Profile/notification preferences are device-local; online identity and notification delivery are unconfigured. See [v2 conformance and UAT](HOME_DESIGN_V2_ACCEPTANCE.md) and [rendered evidence](docs/home-v2/README.md).
+
 ## Home + Spending reconstruction candidate
 
 The isolated `blueprint-c-home-spending-reconstruction` branch reconstructs Home and the four-area Spending workspace while retaining Financial Core 2.0. Home includes a compact ambient hero and circular player, financial position, spending/budget snapshots, upcoming obligations and recent activity. Spending combines daily/weekly analysis and calendar evidence, category/group breakdown, budget allocations, and canonical transaction exploration. The reporting selector is bounded to 2026–2050; older stored dates are preserved.

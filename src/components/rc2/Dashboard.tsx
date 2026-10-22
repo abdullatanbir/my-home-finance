@@ -222,11 +222,15 @@ export function WealthPanel({
   onOpen,
   onSnapshot,
   onAddAccount,
+  designV2 = false,
+  onForecast,
 }: {
   store: FinancialStore;
   onOpen: () => void;
   onSnapshot: () => void;
   onAddAccount: () => void;
+  designV2?: boolean;
+  onForecast?: () => void;
 }) {
   const [range, setRange] = useState("1M"),
     [context, setContext] = useState<"Net Worth" | "Assets" | "Liabilities">(
@@ -236,6 +240,7 @@ export function WealthPanel({
   const cutoff = (() => {
     if (range === "ALL") return "0000-01-01";
     if (range === "1W") return daysAgo(6);
+    if (range === "YTD") return `${today().slice(0, 4)}-01-01`;
     const n = { "1M": 1, "3M": 3, "6M": 6, "1Y": 12 }[range] || 1;
     const d = new Date(`${today()}T12:00:00`),
       day = d.getDate();
@@ -293,8 +298,10 @@ export function WealthPanel({
     <section className="bc-card bc-wealth-panel">
       <div className="bc-section-head">
         <div>
-          <p className="bc-eyebrow">THE BIG PICTURE</p>
-          <h2>Your wealth, in perspective</h2>
+          <p className="bc-eyebrow">
+            {designV2 ? "YOUR FINANCIAL POSITION" : "THE BIG PICTURE"}
+          </p>
+          <h2>{designV2 ? "NET WORTH" : "Your wealth, in perspective"}</h2>
         </div>
         <button
           className="bc-text-button"
@@ -319,6 +326,11 @@ export function WealthPanel({
           </button>
         ))}
       </div>
+      {designV2 && (
+        <button className="hv2-forecast" onClick={onForecast}>
+          Forecast <ArrowRight size={16} />
+        </button>
+      )}
       <div className="bc-wealth-number">
         <strong>{money(value)}</strong>
         {delta !== null ? (
@@ -328,7 +340,10 @@ export function WealthPanel({
             ) : (
               <ArrowDownRight size={14} />
             )}{" "}
-            {money(Math.abs(delta))} <small>across shown observations</small>
+            {designV2
+              ? `${delta < 0 ? "-" : "+"}${money(Math.abs(delta))}${points[0].valueMinor === 0 ? "" : ` (${((delta / Math.abs(points[0].valueMinor)) * 100).toFixed(2)}%)`}`
+              : money(Math.abs(delta))}{" "}
+            <small>across shown observations</small>
           </span>
         ) : (
           <span className="bc-muted-note">
@@ -362,7 +377,10 @@ export function WealthPanel({
         role="group"
         aria-label="Net worth history period"
       >
-        {["1W", "1M", "3M", "6M", "1Y", "ALL"].map((r) => (
+        {(designV2
+          ? ["1W", "1M", "3M", "YTD", "ALL"]
+          : ["1W", "1M", "3M", "6M", "1Y", "ALL"]
+        ).map((r) => (
           <button
             key={r}
             aria-pressed={range === r}
@@ -382,6 +400,7 @@ export function WealthPanel({
             "3M": "3 Months",
             "6M": "6 Months",
             "1Y": "1 Year",
+            YTD: "Year to date",
             ALL: "All history",
           }[range]
         }

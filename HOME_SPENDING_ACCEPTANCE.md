@@ -1,3 +1,5 @@
+> Historical Blueprint C record. This branch intentionally supersedes Home presentation with [Home Design v2](HOME_DESIGN_V2_ACCEPTANCE.md); the earlier Home acceptance claims are not current v2 evidence.
+
 # Blueprint C — Home + Spending reconstruction acceptance
 
 ## Candidate and safety

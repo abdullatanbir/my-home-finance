@@ -132,7 +132,7 @@ test("hero hierarchy, circular player and viewport reveal financial content", as
     const hero = page.locator(".bc-hero"),
       player = hero.getByRole("button", { name: "Play sound" });
     await expect(hero.locator("h1")).toHaveText("Wednesday");
-    await expect(hero.locator(".bc-hero-date")).toHaveText("October 21 · 2026");
+    await expect(hero.locator(".bc-hero-date")).toHaveText("October 21, 2026");
     await expect(hero).not.toContainText("Welcome home.");
     await expect(hero.locator(".bc-motivation")).not.toBeEmpty();
     const h = (await hero.boundingBox())!,
@@ -248,6 +248,7 @@ test("Home day and calendar preserve context through detail and browser Back", a
       exact: true,
     })
     .click();
+  await page.getByRole('button',{name:'Open selected day in Spending'}).click();
   await expect(
     page.getByRole("heading", { name: "Daily Summary · 2026-10-21" }),
   ).toBeVisible();

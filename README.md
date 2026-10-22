@@ -33,19 +33,11 @@ If Chromium is already installed, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to i
 
 `npm run build` performs the repository's TypeScript project build and may refresh the tracked generated `tsconfig.tsbuildinfo`. To type-check and bundle without refreshing that metadata, use `npm exec tsc -- --noEmit` followed by `npm exec vite -- build`.
 
-## Home + Spending candidate
+## Home + Spending reconstruction candidate
 
-[Home + Spending acceptance](HOME_SPENDING_ACCEPTANCE.md) maps the requested sections to source, automated checks, and manual UAT. The supplied RC3 financial core is preserved. Home follows wealth → spending snapshot → budget → upcoming → recent activity. Spending includes monthly/weekly actual-spending charts, calendar, breakdown, budgets, transactions and filters. Chart drill-downs preserve the originating context, and tabs support arrow keys, Home and End.
+The isolated `blueprint-c-home-spending-reconstruction` branch reconstructs Home and the four-area Spending workspace while retaining Financial Core 2.0. Home includes a compact ambient hero and circular player, financial position, spending/budget snapshots, upcoming obligations and recent activity. Spending combines daily/weekly analysis and calendar evidence, category/group breakdown, budget allocations, and canonical transaction exploration. The reporting selector is bounded to 2026–2050; older stored dates are preserved.
 
-To restore the delivered candidate into a new directory from its Git bundle:
-
-```bash
-git clone -b blueprint-c-home-spending My_Home_Finance_Home_Spending.bundle My_Home_Finance
-cd My_Home_Finance
-npm ci
-npm run build
-npm run preview
-```
+[Acceptance and Windows UAT handoff](HOME_SPENDING_ACCEPTANCE.md) records the implementation, tests, rendered viewport evidence, production protections and remaining physical-device acceptance. [Representative screenshots](docs/blueprint-c/) show seeded test data. The completed candidate can be transferred in a local Git bundle without publishing or deploying production.
 
 ## Data safety and phone installation
 

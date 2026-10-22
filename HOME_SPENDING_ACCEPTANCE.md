@@ -1,66 +1,100 @@
-# Blueprint C — Home + Spending reconstruction
+# Blueprint C — Home + Spending reconstruction acceptance
 
-## Scope and baseline
+## Candidate and safety
 
-The requested scope is the full Home + Spending reconstruction (00–11), including H-02. The uploaded `My_Home_Finance_Blueprint_C_RC3.bundle` contains source code, release reports and UAT instructions, rather than a separate detailed blueprint specification. Its RC3 source at `4b3a2ce2f39fb4a66e56664c700d1ce521aa7592`, `RC3_UAT.md`, and the user's supplied section outline establish the implementation baseline here. Historical validation claims in the bundle are not evidence of this run; current results are recorded below.
+Implementation branch: `blueprint-c-home-spending-reconstruction`.
+Source baseline: `a5d1dc45ba6f10d30503b114f6a348899b3c7655` (`blueprint-c-home-spending`).
+Protected production: `V-27-Development` at `9b9f95c66fd717bcbc557836efddd9341fe75a2e`.
+The prior RC3 and Home/Spending candidates are rejected UX baselines. Their historical acceptance documents are not evidence of this reconstruction.
 
-The candidate is integrated on local branch `blueprint-c-home-spending`. The original checkout branch `work` and remote `origin/main` are preserved. The imported financial core is retained without modification. No live financial data, account connections, remote writes, deployment, or release promotion are needed for this reconstruction.
+The financial core, storage/migrations, imports, canonical transaction actions and local-media controller are retained. No changes to `src/core/`, `src/lib/`, dependency declarations, lockfile, or the service-worker source are part of this reconstruction. The build precache additionally includes the existing bundled default Home artwork so that it is available offline. No backend, bank credentials, AI advice, external finance integration, production merge or deployment was introduced.
+
+Product Owner acceptance remains required. PASS below means implementation and the recorded engineering checks passed; it does not mean Product Owner UAT approval.
+
+## Experience changes
+
+Home now uses a compact ambient image/video hero with local-time greeting, graded weekday/date/year, a deterministic short motivational line, localized contrast treatment, and a circular media control. The old horizontal player, Home filenames and “Welcome home.” are removed. Desktop financial position uses a metric/chart composition with visible Assets and Liabilities; mobile deliberately reflows it. Add Account is primary and snapshots remain secondary. Spending and Budget snapshots use explicit evidence and contextual destinations, followed by recurring obligations and recent canonical activity.
+
+Spending is a dedicated workspace, rather than a chart/calendar toggle. Overview combines a monthly summary, daily/weekly chart, persistent analysis calendar and evidence panel. Breakdown partitions transactions into categories or groups once, with largest/frequent expense drilldowns. Budget shows planned, spent, remaining/overspent, projections and category allocations with evidence. Transactions directly exposes the canonical filters and detail/actions inside the workspace. Analysis drilldowns clear unrelated stale transaction filters; ordinary tab navigation preserves relevant context.
+
+The reporting selector and month navigation are bounded to **2026–2050 inclusive**. Existing historical dates are preserved in storage and financial calculations; the UI does not add older years to the approved selector. Day and range inspection use same-document browser history. Home’s seven-day evidence can span month boundaries while the Transactions filters continue to intersect the selected month explicitly.
+
+## Validation record
+
+Final command results are recorded at completion below. No skipped or zero-test result is counted as validation.
+
+- Node.js 24; frozen dependency install: `npm ci --ignore-scripts`.
+- TypeScript and production bundle: `npm run build`.
+- Financial Core: `npm run test:core` — 33 tests passed.
+- Static QA: `npm run qa` — all 14 checks passed.
+- Browser regression: `npm run test:e2e -- --workers=2` — 87 tests passed, none skipped. The 18 reconstruction cases were then rerun successfully after tightening their fixtures to use typed Income/Transfer categories and a valid owned savings-transfer destination; application source was unchanged.
+- Production PWA/offline: `npm run test:pwa -- --workers=1` — 2 tests passed, none skipped.
+- `git diff --check`: passed.
+
+Browser commands use `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium` in this machine and `--workers=2` for regressions, `--workers=1` for the production PWA suite. Normal Playwright-managed Chromium works without that override.
+
+`tests/reconstruction.spec.ts` uses explicit test-only data and a fixed local date, October 21, 2026. It exercises signed refunds, pending activity, transfers, income, sparse observations, overspending, the year bounds, month-intersected filters, day/range navigation, cross-month Home evidence, and local media. `tests/home-spending.spec.ts` separately retains leap-day and future-date coverage. No synthetic history is inserted into the application by presentation components.
+
+Earlier RC2/RC3 tests were updated only where the new specification supersedes the expected greeting/date hierarchy, player controls, calendar toggle, budget presentation, or historical year-selector behavior. The old 2025 test now requires that the record remain unchanged while 2025 is absent from the selector. Financial assertions, transaction actions, import/recovery checks and offline behavior remain exercised.
+
+## Visual and runtime evidence
+
+Rendered Chromium screenshots were opened and inspected, beyond source inspection and passing tests. Home and all four Spending areas were exercised at **320, 390, 768 and 1440px**, in dark and light themes, with native 900px-height viewports. Inspections covered a bright actual image, signed refund day, selected calendar day, overspent budget, transaction detail, filter surfaces, range controls and navigation. Initial screenshots prompted tighter mobile spacing, localized hero-text contrast, explicit budget labels, ordered recent evidence, and removal of duplicate day rows. At 390px the compact hero is approximately 200px tall and financial content begins within the first 320px. No unintended document-level horizontal scrolling was observed.
+
+Generated evidence is under `qa-output/final-{theme}-{width}-{surface}.png`, where surface includes `home`, `wealth`, `Overview`, `Breakdown`, `Budget`, `Transactions`, `calendar`, `detail` and `filters`. The tests regenerate these files. Representative inspected images are retained in [docs/blueprint-c](docs/blueprint-c/). Full-page screenshots naturally show the fixed primary navigation at the capture viewport’s bottom; it remains fixed while scrolling.
 
 ## Requirements traceability
 
-| ID | Delivered experience | Implementation / acceptance evidence |
-| --- | --- | --- |
-| 00 | Isolated local development branch; production unchanged | Branch above; no push or merge |
-| 01 | Preserve canonical IDs, integer cents, actual/forecast rules, transfers, refunds, migration, recurring, imports, backups | `src/core/` unchanged from uploaded RC3; `core-tests/run.cjs`, `tests/blueprint.spec.ts`, existing accepted regression suites |
-| H-01 | Header with feature drawer, brand/Home destination and Settings | `BlueprintApp.tsx`, `rc2/NavigationDrawer.tsx`; RC2/RC3 navigation checks |
-| H-02 | Local-time greeting, dominant weekday/date, smaller Welcome home; independent local image/video/music; one sound toggle and one audible source; localized text scrim; reduced motion | `rc2/HeroMedia.tsx`, `rc2/useLocalMedia.ts`; RC2 media and RC3 greeting/theme checks |
-| H-03 | Net Worth / Assets / Liabilities, six ranges, real observations, pointer/touch/keyboard inspection, manual accounts | `rc2/Dashboard.tsx`; RC3 wealth/history checks |
-| H-04 | Today plus previous six days, prior-week comparison, daily evidence | `rc2/Dashboard.tsx`; RC2 daily comparison checks |
-| H-05 | Selected-month actuals, budget remaining/overspent, projections distinctly labelled, category drill-down | Dashboard and Spending Budget; RC3 budget evidence checks |
-| H-06 | Pending/scheduled obligations and recurring projections, source detail, full recurring destination | Dashboard; RC3 Upcoming checks |
-| H-07 | Recent records open canonical detail; full transaction destination | Dashboard and transaction detail; canonical/RC3 checks |
-| S-01 | Selected-month total spending and previous-month comparison; actual income | Spending Overview; financial/core checks |
-| S-02 | Monthly daily bars and weekly seven-day groups; proportional actual amounts, signed refund values, real month boundaries and evidence drill-down | `rc3/SpendingActivity.tsx`; `tests/home-spending.spec.ts` |
-| S-03 | Month calendar, day selection, actual amounts and distinct projections; context survives detail Close and Back | `BlueprintApp.tsx`; RC3 day/Back checks |
-| S-04 | Group/category breakdown, largest and most frequent expense evidence | Spending Breakdown; canonical browser suite |
-| S-05 | Planned/actual income, budgeted/actual spending, category allocations and projected remaining | Spending Budget; RC3 budget and mobile form checks |
-| S-06 | Transaction tab, canonical detail, editing/status/refund/copy/move/recovery retained | Canonical browser and accepted regression suites |
-| S-07 | Search, month-intersected dates, type, account, group/category, lifecycle, frequency and amount limits; apply/clear/cancel | Transaction filters; RC3 coherent-filter checks |
-| 04 | Home / Spending / Investment / Savings / far-right Quick; grouped feature drawer; contextual Back | NavigationDrawer and `rc3/useContextHistory.ts`; RC2/RC3 navigation checks |
-| 05 | Existing category IDs/groups retained; additive typed hierarchy; searchable native selection | `src/core/categoryDefaults.ts`, `rc3/CategorySelect.tsx`; core/RC3 category checks |
-| 06 | Both themes; 320/390/768/1440 layouts; scroll contained within chart/dialog; touch controls | `blueprint.css`; RC2/RC3 and reconstruction responsive checks |
-| 07 | Associated form labels, modal keyboard behavior, chart observation controls, roving tab focus and labelled tab panel | `rc3/SpendingTabs.tsx`; existing keyboard checks and reconstruction tab test |
-| 08 | No financial-model rewrite, bank linking, fabricated observations, category-driven transaction-type change, or production promotion | Unchanged RC3 financial core; category/history assertions |
-| 09 | Requirement-to-source and acceptance mapping | This table |
-| 10 | Build, static QA, core, browser, theme/viewport screenshots, production offline/update checks | Current-run results below; generated `qa-output/` screenshots |
-| 11 | Physical-device media/install/offline and PO runtime acceptance remain manual | UAT sequence below; `RC3_UAT.md` |
+| ID | Requirement | Implementation | Automated evidence | Visual/runtime evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| P-01 | Isolated candidate; protect production | Candidate branch above; no protected-ref writes | Git status/ref checks | No merge, push or deployment executed | PASS |
+| C-01 | Stable Financial Core 2.0 and integer-cent semantics | Existing core/engine/store retained | 33 core tests; canonical browser suite | Refund, transfer, income and pending test records inspected | PASS |
+| C-02 | Accounts, savings, investments and Net Worth calculations | Existing canonical actions and calculations | `blueprint.spec.ts`, core tests | Financial position and account detail exercised | PASS |
+| C-03 | Recurrence, imports, duplicate handling, migration and backup compatibility | Existing engine/import/storage paths | Core suite, `recurring.spec.ts`, canonical import/backup/recovery cases | Upcoming opens actual recurring/source details | PASS |
+| H-01 | Header, drawer, Settings and reading order | Header + Dashboard hierarchy | RC2 drawer/focus tests; Home reading-order test | Both themes, 320/390/768/1440 Home | PASS |
+| H-02 | Medium hero, local greeting, graded weekday/date/year, motivation; remove old greeting | `rc2/HeroMedia.tsx`, experience styles | Hero hierarchy and viewport test; RC3 time checks | Bright artwork at mobile and desktop; financial content visible below hero | PASS |
+| H-03 | Natural image/video; preserve local persistence and music settings | Existing IndexedDB/controller; localized text gradient | RC2 media persistence/coordination; PWA media test | Image and video runtime; no blanket image filter | PASS |
+| H-04 | Circular accessible player, active rotation, paused state and reduced motion | Hero button, orbit disc, state label/focus | Media keyboard/source/reduced-motion test | Small lower-left control; no raw filename or horizontal player | PASS |
+| H-05 | Net Worth, Assets, Liabilities, six ranges, real chart evidence and Add Account | `rc2/Dashboard.tsx` wealth panel | RC2/RC3 real history, pointer, touch, keyboard and account tests | Mobile wealth and desktop split composition | PASS |
+| H-06 | Actual recent spending and contextual day/range drilldown | Dashboard + workspace range/day context | RC2 daily comparison; Home day and cross-month tests | Home bars and selected-day Overview evidence | PASS |
+| H-07 | Planned, spent, remaining/overspent; same-month Budget destination | Home budget + Spending Budget | Home budget/category/detail test; canonical refund-budget test | Explicit $25 overspent and three-part summary in seeded case | PASS |
+| H-08 | Upcoming obligations and recurring/source detail | Canonical pending/scheduled rows and recurring projections | RC3 Upcoming test | Coming up rows and recurring dialog | PASS |
+| H-09 | Recent canonical activity; Close/Back returns Home | Existing detail dialog and context history | Home recent focus/origin test | Recent activity and canonical detail inspected | PASS |
+| S-01 | Four distinct Spending experiences | `experience/SpendingWorkspace.tsx` | Tab/panel/keyboard tests; eight theme/viewport cases | Overview, Breakdown, Budget, Transactions in both themes | PASS |
+| S-02 | Monthly total, previous comparison, income and supporting evidence | Overview summary and evidence panels | Signed canonical-spending agreement test | Monthly summary, previous month and income labels | PASS |
+| S-03 | Daily/weekly charts, proportional amounts, refunds, sparse/future/leap dates | Existing canonical SpendingActivity; Home zero bars have zero height | Leap-February, future-day, monthly/weekly tests | Positive/refund bars and disabled future bins | PASS |
+| S-04 | First-class calendar, month/year navigation, intensity, today and selection | Shared `experience/SpendingCalendar.tsx` | Day/detail/Back, bounded year and viewport tests | Selected purple day, today marker, green refund and evidence | PASS |
+| S-05 | Exact 2026–2050 selector; retain historical data | Bounded PeriodPicker and navigation controls | Exact 25 options, both bounds, preserved 2025 record | Year picker and boundary month controls exercised | PASS |
+| S-06 | Category/group breakdown, largest/frequent evidence, compatible IDs | Independent grouping, canonical IDs, drilldowns | Partition/totals agreement; RC3 category preservation tests | Composition bars, category rows, largest/frequent surfaces | PASS |
+| S-07 | Searchable typed category hierarchy and original groups | Existing CategorySelect and defaults retained | Core category idempotence and RC3 hierarchy tests | Category and canonical entry filters exercised | PASS |
+| S-08 | Budget analysis, allocations, progress, projections and underlying transactions | Budget workspace; canonical budgetSummary | Budget overspend/category/drilldown and canonical refund tests | Planned/spent/overspent; category progress; evidence cards | PASS |
+| S-09 | Full transaction exploration and canonical actions | Workspace reuses canonical rows, filters and detail | Canonical edit/status/refund/copy/move/recovery; filter cases | Transactions and native filter/detail dialogs | PASS |
+| N-01 | Home/Spending month/day/tab/category/detail origin and Back | Same-document context history; relevant inspection state | Day/range/Close/Back and Home category tests | Detail closes to selected day/category or Home | PASS |
+| N-02 | No stale filters on analysis drilldown; cancel draft filters with Back | Shared canonical filter dialog + explicit reset for analysis | Analysis-drilldown and draft-date/Back edge-case test passed | Filter dialog, empty/matching states inspected | PASS |
+| N-03 | Home / Spending / Investment / Savings / far-right Quick; preserve drawer | Existing primary/drawer architecture retained | RC2 drawer and canonical Quick tests | Bottom navigation on all rendered viewports | PASS |
+| V-01 | Coherent responsive light/dark UI at four widths | `experience/experience.css` and existing semantic variables | Eight theme/viewport cases; document overflow assertions | All specified viewports and four Spending areas inspected | PASS |
+| A-01 | Focus, keyboard, modal semantics, tab semantics, chart observation | Native controls/dialogs; roving tabs; SVG point controls | RC2/RC3 focus/touch/keyboard and reduced-motion checks | Focused player, detail and filter surfaces inspected | PASS |
+| PWA-01 | GitHub Pages base, offline shell/media and update lifecycle | Existing worker behavior + additive default-artwork precache | Two production PWA tests, including update/activation and offline media | Offline Home and Spending successfully exercised | PASS |
+| X-01 | No bank connection, financial-product sales, AI advice or copied reference assets | Local-only experience with existing artwork | Unchanged dependency/core paths; static QA | Existing My Home Finance identity and manual data entry | PASS |
 
-Home reading order follows H-03 through H-07: wealth, spending snapshot, budget, upcoming, recent activity. Desktop pairs spending with budget and upcoming with recent activity; mobile follows that same order.
+## Limitations and Product Owner UAT
 
-## Current-run validation
+- Automated runtime evidence is Chromium on Linux. Physical Windows/mobile devices, iOS installation, device-specific audio/video codecs, and actual user-preferred media remain Product Owner UAT checks.
+- The year selector deliberately excludes historical years outside 2026–2050. Stored records remain intact and included wherever canonical all-history calculations apply; this reconstruction does not add a second historical selector.
+- Daily/monthly chart bars scroll inside the chart region on narrow screens; the document itself does not scroll horizontally.
+- The candidate has no production promotion or remote publication. A local Git bundle can transfer the completed branch without writing any remote ref.
 
-| Check | Current candidate result |
-| --- | --- |
-| `npm ci` | Passed with the supplied lockfile |
-| `npm run build` | Passed, including TypeScript and Vite production bundle |
-| `npm run qa` | 14 checks passed |
-| `npm run test:core` | 33 passed, 0 failed/skipped |
-| Browser suite | 69 distinct checks validated: 68 passed in the full run; corrected Home reading-order assertion passed on targeted rerun; 0 skipped |
-| `npm run test:pwa -- --workers=1` | 2 passed, 0 failed/skipped; real worker update, offline shell/navigation and persisted local media |
-| Financial-core / dependency preservation | `src/core/`, `package.json`, `package-lock.json` unchanged from uploaded RC3 |
-| `git diff --check` | Passed |
+## Windows UAT handoff
 
-The initial, unmodified uploaded RC3 passed all 64 existing browser checks. The first final run exposed a test-selector mistake: a broad CSS heading selector included the hidden period-picker dialog. The reading-order assertion now uses visible accessible headings; its targeted rerun passed without changing product code or weakening the expected order. The reconstruction adds five focused browser tests. Final runs use the standard npm scripts with `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/lib/chromium/chromium` and two browser workers. Both Playwright configurations now accept this optional executable override; dependency versions and lockfile remain unchanged from uploaded RC3.
+Use a separate browser profile and a backup copy for UAT. Financial JSON backups do not include local media binaries. The following commands consume the **completed Git bundle**, placed in `C:\Java-Training\my home finance-2026`; they do not depend on an unpublished remote branch:
 
-Screenshots are generated under ignored `qa-output/`. Coverage includes dark/light themes and 320, 390, 768 and 1440-pixel widths, Home, Spending tabs, calendar, dialogs and keyboard checks. Linux Chromium automation does not establish physical iOS/Android installation or PO acceptance.
+```powershell
+Set-Location 'C:\Java-Training\my home finance-2026'
+git clone --branch blueprint-c-home-spending-reconstruction .\blueprint-c-home-spending-reconstruction.bundle .\blueprint-c-reconstruction-uat
+Set-Location .\blueprint-c-reconstruction-uat
+npm.cmd ci --ignore-scripts
+npm.cmd run build
+npm.cmd run preview -- --host 0.0.0.0 --port 4173
+```
 
-## Product Owner UAT
-
-1. Run `npm ci`, `npm run build`, then `npm run preview -- --host 127.0.0.1 --port 4173` from the project directory. Use the `/my-home-finance/` path in a separate test browser profile with a **copy** of a financial backup.
-2. Compare migrated balances, budgets, refunds, card transfers and savings against the accepted data. Export and restore a backup in a second isolated profile.
-3. Inspect Home in both themes: greeting/date, local hero image/video, independent music selection, sound toggle, wealth ranges, spending evidence, budget, upcoming and recent activity.
-4. In Spending, switch monthly/weekly charts and inspect bars; use Calendar, Breakdown, Budget and Transactions. Test month changes, category evidence, filters, Close and browser/Android Back.
-5. On an actual phone, test media codecs/autoplay permissions, keyboard/form scrolling, touch charts, standalone installation and offline relaunch. Headless Chromium results do not replace this device acceptance.
-6. Record PO acceptance or reproducible discrepancies. Publishing/merging is a separate action.
-
-Additional production visual smoke: uploaded the bundled home image through Settings, verified its decoded image in both themes at 390 px, checked overflow, and verified IndexedDB persistence after reload. Screenshots: `qa-output/reconstruction-hero-dark-390.png`, `qa-output/reconstruction-hero-light-390.png`. Representative Home and Spending screenshots were visually inspected.
+The terminal reports the `/my-home-finance/` application path. Test hero/media, Net Worth ranges, Home day/Budget/Recent links, the four Spending areas, year bounds, detail Close/Back, backup/restore and offline reopening. Final Product Owner acceptance remains required before any separately authorized production promotion.

@@ -4,7 +4,7 @@ const storageKey = 'my-home-finance-financial-core';
 test.beforeEach(async ({ page }) => {
     await page.clock.setFixedTime(new Date('2024-02-29T12:00:00'));
     await page.goto('/my-home-finance/');
-    await expect(page.getByRole('heading', { name: 'Welcome home.' })).toBeVisible();
+    await expect(page.locator('.bc-hero h1')).toBeVisible();
     await page.evaluate(key => {
         const store = JSON.parse(localStorage.getItem(key)!);
         store.transactions = [
@@ -41,8 +41,8 @@ test('chart evidence and Back retain month and monthly scale without changing th
     const before = await page.evaluate(key => localStorage.getItem(key), storageKey);
     await page.getByRole('button', { name: 'Monthly', exact: true }).click();
     await page.getByRole('region', { name: 'Monthly actual spending chart' }).getByRole('button', { name: '2024-02-29: $12.34 actual spending', exact: true }).click();
-    await expect(page.getByRole('button', { name: /Leap day purchase/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /February purchase/ })).toHaveCount(0);
+    await expect(page.locator('.ex-evidence-panel').getByRole('button', { name: /Leap day purchase/ })).toBeVisible();
+    await expect(page.locator('.ex-evidence-panel').getByRole('button', { name: /February purchase/ })).toHaveCount(0);
     await page.getByRole('button', { name: 'Back to previous context' }).click();
     await expect(page.getByRole('button', { name: 'Monthly', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('button', { name: 'Choose reporting period' })).toContainText('February 2024');

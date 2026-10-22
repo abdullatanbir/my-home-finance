@@ -1,0 +1,888 @@
+/* Blueprint C reconstruction: compact atmosphere, financial hierarchy, evidence workspaces. */
+.bc-header {
+  height: 70px;
+  max-width: 1400px;
+  border-bottom: 0;
+}
+.bc-app main {
+  max-width: 1320px;
+  padding-top: 12px;
+}
+.bc-hero {
+  min-height: 0;
+  padding: 26px 30px 22px;
+  gap: 16px;
+  margin-bottom: 24px;
+  border: 0;
+  border-radius: 20px;
+}
+.bc-hero[hidden] {
+  display: none;
+}
+.bc-hero-visual {
+  background:
+    radial-gradient(ellipse at 82% 25%, #748b8455, transparent 50%),
+    linear-gradient(115deg, #203b3c, #344b4c 45%, #6c7f73);
+}
+.bc-hero-visual::after {
+  display: none;
+}
+.bc-hero-shade {
+  background: linear-gradient(90deg, #09191d99, transparent 58%);
+  inset: 0 35% 0 0;
+}
+.bc-hero-context {
+  background: none;
+  padding: 0;
+  margin: 0;
+  max-width: 90%;
+  text-shadow: 0 1px 8px #0008;
+}
+.bc-hero-context .bc-eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #f3f5f4;
+  margin: 0 0 6px;
+}
+.bc-hero-context h1 {
+  font-size: clamp(27px, 3vw, 38px);
+  line-height: 1.1;
+  font-weight: 500;
+  letter-spacing: -1px;
+  margin: 0;
+  color: #fff;
+}
+.bc-hero-context .bc-hero-date {
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  font-weight: 400;
+  margin: 6px 0 0;
+  color: #f5f7f6;
+}
+.bc-hero-context .bc-motivation {
+  font-size: 12px;
+  margin: 10px 0 0;
+  color: #fff;
+}
+.bc-app .bc-orbit-player {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  min-height: 46px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #ffffff77;
+  background: #12262866;
+  color: #fff;
+  backdrop-filter: blur(6px);
+  align-self: flex-start;
+}
+.bc-orbit-disc {
+  display: grid;
+  place-items: center;
+  opacity: 0.9;
+}
+.bc-orbit-player.is-playing .bc-orbit-disc {
+  animation: bc-vinyl-spin 12s linear infinite;
+}
+.bc-orbit-action {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  background: #f5f6f4;
+  color: #163033;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+}
+.bc-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1.22fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.bc-dashboard > .bc-wealth-panel {
+  grid-column: 1/-1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  column-gap: 40px;
+  padding: 30px;
+}
+.bc-wealth-panel > .bc-section-head {
+  grid-column: 1;
+  grid-row: 1;
+}
+.bc-wealth-panel > .bc-wealth-context {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 12px 0;
+}
+.bc-wealth-panel > .bc-wealth-number {
+  grid-column: 1;
+  grid-row: 3;
+  align-content: start;
+}
+.bc-wealth-panel > .bc-trend,
+.bc-wealth-panel > .bc-chart-empty {
+  grid-column: 2;
+  grid-row: 1/5;
+}
+.bc-wealth-panel > .bc-range-control {
+  grid-column: 2;
+  grid-row: 5;
+}
+.bc-wealth-panel > .bc-period-context {
+  grid-column: 2;
+  font-size: 10px;
+  margin: 0;
+  text-align: center;
+}
+.bc-wealth-panel > .bc-primary {
+  grid-column: 1;
+  grid-row: 4;
+  justify-self: start;
+  margin-top: 18px;
+}
+.bc-wealth-panel > .bc-wealth-foot {
+  grid-column: 1/-1;
+  margin-top: 18px;
+}
+.bc-wealth-number > strong {
+  font-size: clamp(36px, 4vw, 52px);
+}
+.bc-dashboard-middle,
+.bc-dashboard-lower {
+  display: contents;
+}
+.bc-spend-panel,
+.bc-budget-panel,
+.bc-upcoming-panel,
+.bc-activity-panel {
+  height: 100%;
+  padding: 26px;
+}
+.bc-spend-panel {
+  border-top: 2px solid var(--bc-purple);
+}
+.bc-budget-panel {
+  border-top: 2px solid var(--bc-positive);
+}
+.bc-dashboard .bc-eyebrow {
+  font-size: 9px;
+  letter-spacing: 1.7px;
+}
+.bc-dashboard h2 {
+  font-size: 19px;
+  font-weight: 500;
+}
+.bc-budget-evidence {
+  padding-top: 14px;
+  border-top: 1px solid var(--bc-border);
+}
+.bc-budget-evidence span {
+  font-size: 11px;
+}
+.ex-workspace-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 18px;
+}
+.ex-workspace-intro > p {
+  margin: 0;
+  font-size: 14px;
+}
+.ex-workspace-intro button,
+.ex-transactions .bc-section-head > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ex-spending .bc-tabs {
+  border: 1px solid var(--bc-border);
+  background: var(--bc-inset);
+  padding: 5px;
+  border-radius: 13px;
+  margin: 0 0 24px;
+  gap: 5px;
+  width: min(100%, 650px);
+}
+.ex-spending .bc-tabs button {
+  border-radius: 9px;
+  border: 0;
+  font-size: 13px;
+}
+.ex-spending .bc-tabs [aria-selected="true"] {
+  background: var(--bc-card);
+  box-shadow: 0 2px 7px #0001;
+  color: var(--bc-text);
+}
+.ex-spending .bc-card {
+  margin: 0;
+  padding: 26px;
+}
+.ex-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.5fr);
+  gap: 22px;
+  margin-bottom: 22px;
+}
+.ex-spending-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--bc-purple) 9%, var(--bc-card)),
+    var(--bc-card)
+  );
+  border-color: color-mix(in srgb, var(--bc-purple) 32%, var(--bc-border));
+}
+.ex-spending-summary h2 {
+  font-size: 14px;
+  color: var(--bc-muted);
+  font-weight: 400;
+  margin: 8px 0;
+}
+.ex-display {
+  display: block;
+  font-size: clamp(32px, 4vw, 48px);
+  font-weight: 500;
+  letter-spacing: -1.8px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.ex-delta {
+  font-size: 12px;
+  margin: 14px 0 24px;
+}
+.ex-summary-foot {
+  border-top: 1px solid var(--bc-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  width: 100%;
+  padding-top: 18px;
+  margin-top: auto;
+}
+.ex-summary-foot > span {
+  font-size: 11px;
+  color: var(--bc-muted);
+  flex: 1;
+}
+.ex-summary-foot strong {
+  display: block;
+  color: var(--bc-text);
+  font-size: 15px;
+  font-weight: 500;
+  margin-top: 5px;
+}
+.ex-chart-panel .bc-activity-scale {
+  margin-top: 12px;
+}
+.ex-chart-panel .bc-help {
+  margin: 6px 0;
+  font-size: 11px;
+}
+.ex-analysis-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.ex-calendar-arrows {
+  display: flex;
+  gap: 6px;
+}
+.ex-calendar-arrows button {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+}
+.ex-calendar-month {
+  font-size: 13px;
+  margin: 16px 0 0;
+}
+.ex-calendar-panel .bc-calendar {
+  margin-top: 14px;
+  gap: 5px;
+}
+.ex-calendar-panel .bc-calendar button {
+  padding: 8px 2px;
+  min-height: 68px;
+  gap: 0;
+  background: var(--bc-inset);
+  border-color: transparent;
+}
+.ex-calendar-panel .bc-calendar button strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.ex-calendar-panel .bc-calendar button small {
+  font-size: 9px;
+}
+.ex-calendar-panel .bc-calendar [aria-pressed="true"] {
+  outline: 2px solid var(--bc-purple);
+  outline-offset: 0;
+}
+.ex-calendar-panel .bc-calendar [aria-current="date"] strong {
+  background: var(--bc-text);
+  color: var(--bc-bg);
+  border-radius: 50%;
+  padding: 0 4px;
+}
+.ex-day-dot {
+  font-size: 12px;
+  color: var(--bc-purple);
+  height: 14px;
+}
+.ex-calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 10px;
+  color: var(--bc-muted);
+  margin-top: 15px;
+}
+.ex-day-evidence {
+  border-top: 1px solid var(--bc-border);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+.ex-day-evidence h3 {
+  font-size: 13px;
+  margin: 0;
+}
+.ex-day-evidence p {
+  font-size: 12px;
+}
+.ex-evidence-panel .bc-row {
+  padding: 17px 0 !important;
+}
+.ex-evidence-panel > .bc-text-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.ex-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.ex-section-title h2 {
+  margin: 0;
+  font-size: 24px;
+}
+.ex-breakdown-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 22px;
+}
+.ex-breakdown-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.ex-category-composition {
+  display: flex;
+  gap: 3px;
+  height: 16px;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 24px 0;
+}
+.bc-app .ex-category-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--bc-border);
+  border-radius: 0;
+  padding: 18px 0;
+}
+.ex-category-row > i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ex-category-row > span {
+  flex: 1;
+  min-width: 0;
+}
+.ex-category-row strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.ex-category-row > strong {
+  white-space: nowrap;
+}
+.ex-category-row small {
+  font-size: 10px;
+}
+.ex-category-track {
+  display: block;
+  height: 4px;
+  margin-top: 8px;
+  background: var(--bc-inset);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ex-category-track > span {
+  display: block;
+  height: 100%;
+}
+.ex-budget-summary {
+  margin-bottom: 22px !important;
+}
+.ex-budget-numbers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 30px 0 22px;
+}
+.ex-budget-numbers > span {
+  font-size: 12px;
+}
+.ex-budget-numbers strong {
+  display: block;
+  font-size: clamp(23px, 3vw, 36px);
+  letter-spacing: -1px;
+  font-weight: 500;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+.ex-budget-summary > progress {
+  height: 8px;
+}
+.ex-budget-summary > p {
+  font-size: 12px;
+}
+.bc-app .ex-allocation {
+  display: block;
+  width: 100%;
+  padding: 18px 0;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--bc-border);
+  background: none;
+  border-radius: 0;
+}
+.ex-allocation > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+}
+.ex-allocation strong {
+  font-weight: 500;
+}
+.ex-allocation progress {
+  height: 7px;
+  margin: 10px 0;
+}
+.ex-transactions .bc-section-head p {
+  margin: 5px 0;
+  font-size: 12px;
+}
+.ex-spending [role="tabpanel"] {
+  outline-offset: 8px;
+  border-radius: 14px;
+}
+@media (max-width: 900px) {
+  .bc-dashboard > .bc-wealth-panel {
+    column-gap: 20px;
+  }
+  .bc-dashboard {
+    gap: 16px;
+  }
+  .bc-spend-panel,
+  .bc-budget-panel,
+  .bc-upcoming-panel,
+  .bc-activity-panel {
+    padding: 20px;
+  }
+  .ex-overview-grid {
+    grid-template-columns: 1fr;
+  }
+  .ex-spending-summary .ex-summary-foot {
+    margin-top: 16px;
+  }
+  .ex-analysis-grid,
+  .ex-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+  .ex-calendar-panel .bc-calendar button {
+    min-height: 74px;
+  }
+  .ex-spending .bc-card {
+    padding: 22px;
+  }
+  .bc-wealth-number > strong {
+    font-size: 38px;
+  }
+}
+@media (max-width: 600px) {
+  .bc-header {
+    height: 60px;
+    padding: 8px 16px;
+    gap: 10px;
+  }
+  .bc-header button:not(.bc-brand) {
+    padding: 9px;
+    min-width: 44px;
+  }
+  .bc-brand small {
+    display: none;
+  }
+  .bc-app main {
+    padding: 10px 14px 116px;
+  }
+  .bc-hero {
+    padding: 20px;
+    gap: 14px;
+    margin-bottom: 18px;
+    border-radius: 17px;
+  }
+  .bc-hero-context {
+    margin: 0;
+    padding: 0;
+  }
+  .bc-hero-context h1 {
+    font-size: 29px;
+  }
+  .bc-hero-context .bc-hero-date {
+    font-size: 12px;
+    margin-top: 5px;
+  }
+  .bc-hero-context .bc-eyebrow {
+    font-size: 9px;
+  }
+  .bc-hero-context .bc-motivation {
+    font-size: 11px;
+    margin-top: 8px;
+  }
+  .bc-app .bc-orbit-player {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+  .bc-dashboard {
+    display: flex;
+    gap: 16px;
+  }
+  .bc-dashboard > .bc-wealth-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 0;
+  }
+  .bc-wealth-panel > .bc-primary {
+    align-self: flex-start;
+    margin: 6px 0 0;
+    order: 8;
+  }
+  .bc-wealth-panel > .bc-wealth-foot {
+    order: 9;
+    margin-top: 16px;
+  }
+  .bc-wealth-panel > .bc-period-context {
+    font-size: 10px;
+    text-align: left;
+  }
+  .bc-wealth-panel > .bc-wealth-context {
+    margin: 12px 0;
+  }
+  .bc-wealth-panel > .bc-range-control {
+    margin-bottom: 6px;
+  }
+  .bc-wealth-panel .bc-section-head h2 {
+    font-size: 17px;
+  }
+  .bc-wealth-number > strong {
+    font-size: 36px;
+  }
+  .bc-wealth-panel > .bc-trend {
+    margin-top: 16px;
+  }
+  .bc-trend-svg {
+    height: 155px;
+  }
+  .bc-chart-readout {
+    font-size: 10px;
+  }
+  .bc-dashboard h2 {
+    font-size: 18px;
+  }
+  .bc-dashboard-middle,
+  .bc-dashboard-lower {
+    display: contents;
+  }
+  .bc-dashboard .bc-card {
+    width: 100%;
+  }
+  .bc-title h1 {
+    font-size: 30px;
+    margin-bottom: 8px;
+  }
+  .bc-title .bc-eyebrow {
+    margin-top: 6px;
+  }
+  .bc-title .bc-month-navigation {
+    margin: 0 0 12px;
+  }
+  .ex-workspace-intro {
+    margin: 0 0 16px;
+    align-items: flex-start;
+  }
+  .ex-workspace-intro > p {
+    font-size: 12px;
+    max-width: 130px;
+  }
+  .ex-workspace-intro button {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+  .ex-spending .bc-tabs {
+    gap: 2px;
+    padding: 4px;
+    margin-bottom: 18px;
+  }
+  .ex-spending .bc-tabs button {
+    font-size: 11px;
+    padding: 9px 4px;
+  }
+  .ex-spending .bc-card {
+    padding: 18px;
+  }
+  .ex-overview-grid,
+  .ex-analysis-grid,
+  .ex-breakdown-grid {
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .ex-display {
+    font-size: 38px;
+  }
+  .ex-calendar-panel .bc-calendar {
+    gap: 3px;
+  }
+  .ex-calendar-panel .bc-calendar button {
+    min-height: 64px;
+    border-radius: 7px;
+  }
+  .ex-calendar-panel .bc-calendar button small {
+    font-size: 8px;
+  }
+  .ex-calendar-panel .bc-calendar button strong {
+    font-size: 11px;
+  }
+  .ex-day-evidence h3 {
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+  .ex-section-title {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .ex-section-title h2 {
+    font-size: 22px;
+  }
+  .ex-section-title .bc-activity-scale {
+    margin: 8px 0;
+  }
+  .ex-budget-numbers {
+    gap: 10px;
+    margin: 22px 0;
+  }
+  .ex-budget-numbers strong {
+    font-size: 23px;
+  }
+  .ex-budget-numbers > span {
+    font-size: 10px;
+  }
+  .ex-summary-foot {
+    gap: 12px;
+  }
+  .ex-summary-foot strong {
+    font-size: 13px;
+  }
+  .ex-category-row {
+    gap: 8px !important;
+  }
+  .ex-category-row > strong {
+    font-size: 12px;
+  }
+  .ex-allocation > span {
+    font-size: 12px;
+  }
+  .ex-breakdown-grid > div {
+    gap: 16px;
+  }
+  .bc-row > span:last-child {
+    max-width: 42%;
+  }
+  .bc-row strong {
+    overflow-wrap: anywhere;
+  }
+  .ex-evidence-panel h2 {
+    font-size: 16px;
+    overflow-wrap: anywhere;
+  }
+  .bc-wealth-foot > small {
+    max-width: 100%;
+  }
+  .bc-app .bc-range-control button {
+    min-width: 0;
+    flex: 1;
+    padding: 6px;
+  }
+  .ex-chart-panel .bc-activity-bars {
+    gap: 4px;
+  }
+  .ex-chart-panel .bc-activity-bars:not(.is-monthly) button {
+    min-width: 38px;
+  }
+  .ex-chart-panel .bc-activity-bars strong {
+    font-size: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bc-orbit-player.is-playing .bc-orbit-disc {
+    animation: none;
+  }
+}
+.ex-position-totals {
+  display: flex;
+  gap: 24px;
+  grid-column: 1;
+  grid-row: 4;
+  margin-top: 18px;
+}
+.bc-app .ex-position-totals button {
+  border: 0;
+  background: none;
+  text-align: left;
+  padding: 0;
+  min-width: 0;
+}
+.ex-position-totals span {
+  display: block;
+  font-size: 11px;
+  color: var(--bc-muted);
+}
+.ex-position-totals strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 500;
+  margin-top: 3px;
+}
+.bc-dashboard > .bc-wealth-panel > .bc-primary {
+  grid-row: 5;
+  margin-top: 12px;
+}
+.ex-home-spending-foot {
+  border-top: 1px solid var(--bc-border);
+  padding-top: 12px;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ex-home-spending-foot button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 6px;
+}
+.ex-home-spending-foot small {
+  font-size: 10px;
+  max-width: 160px;
+}
+@media (max-width: 600px) {
+  .ex-position-totals {
+    margin: 16px 0 8px;
+    gap: 30px;
+  }
+  .ex-position-totals strong {
+    font-size: 16px;
+  }
+  .bc-dashboard > .bc-wealth-panel > .bc-primary {
+    margin-top: 6px;
+  }
+  .bc-budget-evidence {
+    gap: 10px;
+  }
+  .ex-home-spending-foot small {
+    max-width: 125px;
+  }
+}
+/* Keep artwork bright; confine contrast treatment to the text itself. */
+.bc-hero-visual {
+  background: url("/assets/heroes/home/home-01.webp")
+    center/cover no-repeat #344b4c;
+}
+.bc-hero-shade {
+  background: none;
+}
+.bc-hero-context {
+  padding: 10px 16px 12px 10px;
+  margin: -6px -10px -4px;
+  background: linear-gradient(90deg, #07191dcc, #07191d88 76%, transparent);
+  border-radius: 12px;
+  min-width: 210px;
+}
+.ex-selection-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bc-border);
+  font-size: 12px;
+}
+.ex-selection-total strong {
+  color: var(--bc-text);
+}
+@media (max-width: 600px) {
+  .bc-hero-context {
+    padding: 8px 16px 8px 10px;
+    margin: -4px -8px -4px;
+    min-width: 180px;
+  }
+  .bc-back {
+    padding-left: 0 !important;
+    margin-bottom: 6px;
+  }
+  .bc-title .bc-eyebrow {
+    display: none;
+  }
+  .bc-title {
+    gap: 5px;
+  }
+  .bc-title h1 {
+    font-size: 28px;
+    margin: 5px 0 10px;
+  }
+  .bc-title .bc-month-navigation {
+    margin-bottom: 10px;
+  }
+  .ex-workspace-intro {
+    margin-bottom: 12px;
+  }
+  .ex-workspace-intro > p {
+    max-width: 150px;
+  }
+}

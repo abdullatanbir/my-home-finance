@@ -6,6 +6,7 @@ export default defineConfig({
 
     use: {
         baseURL: 'http://localhost:5173/my-home-finance/',
+        launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined },
     },
 
     webServer: {

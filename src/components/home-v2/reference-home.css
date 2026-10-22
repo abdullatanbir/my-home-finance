@@ -1,0 +1,162 @@
+/* Phone reference: neutral black surfaces, blue financial emphasis, outline icons. */
+.hv2-home {
+  --bc-bg: #050505;
+  --bc-card: #121212;
+  --bc-inset: #1b1b1b;
+  --bc-border: #2b2b2b;
+  --bc-text: #f5f5f5;
+  --bc-muted: #969696;
+  --bc-accent: #219ef8;
+  --bc-positive: #86c6a3;
+  --bc-negative: #eb626c;
+}
+.hv2-home .bc-header { height: 76px; }
+.hv2-home .bc-header > button:not(.bc-brand) { border: 0; border-radius: 50%; background: #121212; width: 44px; height: 44px; }
+.hv2-home .bc-brand strong { font-size: 11px; letter-spacing: 2.5px; }
+.hv2-home .bc-hero { margin-bottom: 18px; }
+.ref-home-tabs { display: flex; gap: 10px; padding: 0 0 22px; }
+.bc-app .ref-home-tabs button { background: #121212; border: 1px solid transparent; border-radius: 30px; padding: 10px 18px; font-size: 12px; color: #bfbfbf; min-height: 44px; }
+.bc-app .ref-home-tabs [aria-current=page] { background: #262626; color: #fff; }
+.hv2-home .hv2-dashboard { gap: 22px; }
+.hv2-home .hv2-dashboard > .bc-card,
+.hv2-home .hv2-dashboard > .bc-wealth-panel {
+  padding: 26px;
+  border: 1px solid #2a2a2a;
+  border-radius: 24px;
+  background: #121212;
+  box-shadow: inset 0 0 0 1px #ffffff03;
+}
+.hv2-home .hv2-dashboard > .bc-card > .bc-section-head:first-child {
+  padding-bottom: 22px; border-bottom: 1px solid #1d1d1d;
+}
+.hv2-home .hv2-dashboard h2 { font-weight: 500; }
+.hv2-home .bc-wealth-panel > .bc-section-head { max-width: 100%; }
+.hv2-home .bc-wealth-panel > .bc-section-head .bc-eyebrow { display: none; }
+.hv2-home .bc-wealth-panel > .bc-section-head .bc-text-button { display: grid; place-items: center; }
+.hv2-home .bc-wealth-panel h2, .hv2-home .hv2-spending h2, .hv2-home .hv2-budget h2 { font-size: 10px; letter-spacing: 2.2px; }
+.hv2-home .bc-wealth-number { margin: 24px 0 8px; gap: 8px; max-width: 65%; }
+.hv2-home .bc-wealth-number > strong { font-size: clamp(34px, 5vw, 48px); font-weight: 450; letter-spacing: -1.5px; }
+.hv2-home .bc-wealth-number > span { font-size: 12px; line-height: 1.5; }
+.hv2-home .bc-wealth-number small { display: none; }
+.hv2-home .bc-wealth-panel > .ex-position-totals { display: none; }
+.hv2-home .hv2-forecast { top: 104px; right: 26px; color: #eee; background: transparent; border: 1px solid #666; border-radius: 9px; font-size: 12px; padding: 8px 12px; }
+.hv2-home .bc-wealth-panel > .bc-trend { margin-top: 20px; margin-inline: -26px; position: relative; padding-bottom: 36px; color: #3299e6; }
+.hv2-home .bc-trend-svg { height: 190px; }
+.hv2-home .bc-chart-readout { position: absolute; bottom: 12px; left: 10px; right: auto; max-width: calc(100% - 20px); min-height: 44px; border: 1px solid #292929; border-radius: 16px; padding: 11px 14px; background: #070707; color: #ddd; font-size: 11px; gap: 16px; z-index: 1; }
+.hv2-home .bc-chart-readout strong { font-weight: 450; }
+.hv2-home .bc-wealth-panel > .bc-range-control { margin: 12px 0 10px; justify-content: stretch; gap: 7px; }
+.hv2-home .bc-range-control button { flex: 1; border: 1px solid #2d2d2d; border-radius: 10px; color: #b6b6b6; background: transparent; }
+.hv2-home .bc-range-control [aria-pressed=true] { background: #222 !important; color: #fff !important; }
+.hv2-home .bc-wealth-panel > .bc-wealth-context { background: #1b1b1b; border: 0; border-radius: 12px; padding: 4px; gap: 3px; }
+.hv2-home .bc-wealth-context button { min-width: 0; color: #aaa; }
+.hv2-home .bc-wealth-context [aria-pressed=true] { background: #111 !important; color: #fff !important; border-radius: 9px; }
+.hv2-home .bc-wealth-panel > .bc-period-context { font-size: 9px; color: #969696; }
+.hv2-home .bc-wealth-panel > .bc-primary { width: 100%; justify-content: center; background: transparent !important; color: #fff !important; border: 1px solid #666; border-radius: 10px; font-size: 13px; min-height: 46px; }
+.hv2-home .bc-wealth-foot { border-color: #262626; }
+.hv2-home .bc-wealth-foot > small { font-size: 9px; color: #969696; }
+.hv2-home .hv2-spending > .hv2-metric { font-size: 34px; font-weight: 450; letter-spacing: -1px; margin: 22px 0 10px; }
+.hv2-home .hv2-spending > .hv2-caption { display: none; }
+.hv2-home .hv2-days { margin-top: 45px; margin-bottom: 28px; gap: 5px; }
+.hv2-home .hv2-days button { position: relative; border: 1px solid #2a2a2a; background: transparent; border-radius: 10px; padding: 8px 4px; text-align: left; min-height: 62px; box-shadow: inset 0 0 0 1px #ffffff03; }
+.hv2-home .hv2-days button > span { position: absolute; top: -25px; left: 0; width: 100%; text-align: center; text-transform: uppercase; letter-spacing: 1.4px; font-size: 9px; color: #c0c0c0; }
+.hv2-home .hv2-days button > small { display: block; font-size: 12px; color: #bdbdbd; }
+.hv2-home .hv2-days button > strong { font-size: 11px; font-weight: 450; margin: 12px 0 0; }
+.hv2-home .hv2-days [aria-pressed=true] { background: #219ef8; border-color: #76bff4; color: #fff; }
+.hv2-home .hv2-days [aria-pressed=true] small { color: #fff; }
+.hv2-home .hv2-days [aria-pressed=true] > span { color: #c0c0c0; }
+.hv2-home .hv2-days button > strong { order: 1; }
+.hv2-home .hv2-days button { display: flex; flex-direction: column; align-items: flex-start; }
+.hv2-home .hv2-evidence-head { border: 0; padding-top: 0; }
+.hv2-home .hv2-evidence-head > span { font-size: 9px; letter-spacing: 1.7px; text-transform: uppercase; color: #bdbdbd; }
+.hv2-home .hv2-link { color: #b3b3b3; }
+.hv2-home .hv2-budget progress { accent-color: #219ef8; }
+.hv2-home .hv2-budget progress::-webkit-progress-value { background: #219ef8; }
+.hv2-home .hv2-budget progress::-moz-progress-bar { background: #219ef8; }
+.hv2-home .bc-row { gap: 12px; }
+.hv2-home .bc-row strong { font-size: 13px; font-weight: 450; }
+.hv2-home .bc-row small { color: #999; line-height: 1.6; }
+.bc-app .bc-icon:has(.category-glyph) { display: grid; place-items: center; flex-shrink: 0; background: transparent; width: 30px; min-width: 30px; height: 34px; }
+.category-glyph { display: inline-grid; place-items: center; flex-shrink: 0; width: 26px; height: 30px; }
+.ref-tx-date { display: none; }
+.hv2-spending .bc-row-meta,.hv2-spending .bc-row-status { display: none; }
+.hv2-spending .ref-tx-date { display: block; }
+.ref-pending { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #219ef8; margin-left: 4px; vertical-align: middle; }
+.bc-app .hv2-bottom { background: #121212; border-color: #2b2b2b; border-radius: 30px; box-shadow: inset 0 1px 5px #ffffff06, 0 10px 24px #0008; }
+.bc-app .hv2-bottom button { color: #a4a4a4; }
+.bc-app .hv2-bottom [aria-current=page] { color: #f5f5f5; background: #1f1f1f; border-radius: 22px; }
+.bc-app .hv2-bottom button:last-child svg { color: #a18aff; }
+.bc-app .hv2-ai-fab { border-radius: 50%; background: #121212; border: 1px solid #292929; color: #a18aff; box-shadow: inset 0 2px 7px #ffffff09, 0 8px 22px #0008; }
+.category-select-preview { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.category-management-row { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--bc-border); padding: 12px 0; }
+.category-management-row > p { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.category-management-row > button { flex-shrink: 0; font-size: 10px; }
+.category-appearance-picker { width: 100%; min-width: 0; }
+.category-selection-preview { display: flex; align-items: center; gap: 12px; padding: 12px 0; font-size: 12px; text-transform: capitalize; }
+.category-appearance-picker fieldset { border: 0; padding: 12px 0; margin: 0; min-width: 0; }
+.category-appearance-picker legend { font-size: 12px; color: var(--bc-text); }
+.category-appearance-picker fieldset > p { font-size: 11px; color: var(--bc-muted); margin: 8px 0; }
+.category-icon-grid { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 10px; max-height: 270px; overflow-y: auto; padding: 6px; scrollbar-gutter: stable; }
+.bc-app .category-icon-grid button { width: 44px; height: 44px; min-height: 44px; padding: 0; display: grid; place-items: center; justify-self: center; border-radius: 50%; border: 1px solid transparent; background: #050505; color: #ccc; }
+.bc-app .category-icon-grid [aria-pressed=true] { border-color: #bdbdbd; color: #fff; background: #252525; }
+.category-color-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 5px; }
+.bc-app .category-color-grid button { min-height: 44px; background: transparent; border: 1px solid transparent; display: grid; place-items: center; padding: 5px; }
+.category-color-grid button span { background: var(--icon-color); width: 22px; height: 22px; border-radius: 50%; }
+.bc-app .category-color-grid [aria-pressed=true] { border-color: var(--icon-color); }
+.bc-app .category-icon-grid button:focus-visible,.bc-app .category-color-grid button:focus-visible { outline: 2px solid var(--bc-text); outline-offset: 2px; }
+.bc-app dialog.category-appearance-dialog { width: min(480px,calc(100vw - 24px)); }
+.category-appearance-dialog .bc-actions { position: sticky; bottom: -20px; background: var(--bc-card); padding: 12px 0; }
+.ex-category-row > .category-glyph { margin-right: 6px; }
+@media(min-width: 1000px) {
+ .hv2-home .bc-trend-svg { height: 220px; }
+ .hv2-home .hv2-days { gap: 12px; }
+ .hv2-home .hv2-days button { padding: 12px; }
+ .hv2-home .hv2-days button > strong { font-size: 14px; }
+}
+@media(max-width:600px) {
+ .hv2-home .bc-header { height: 64px; }
+ .hv2-home .hv2-dashboard > .bc-card,.hv2-home .hv2-dashboard > .bc-wealth-panel { padding: 20px; border-radius: 21px; }
+ .hv2-home .hv2-dashboard > .bc-card > .bc-section-head:first-child { padding-bottom: 18px; }
+ .hv2-home .bc-wealth-number { max-width: 62%; }
+ .hv2-home .bc-wealth-number > strong { font-size: 34px; }
+ .hv2-home .hv2-forecast { top: 98px; right: 20px; padding: 7px 9px; font-size: 11px; }
+ .hv2-home .bc-wealth-panel > .bc-trend { margin-inline: -20px; }
+ .hv2-home .bc-chart-readout { font-size: 10px; gap: 10px; }
+ .hv2-home .bc-range-control { gap: 5px !important; }
+ .hv2-home .bc-range-control button { font-size: 10px; }
+ .hv2-home .hv2-days { gap: 4px; }
+ .hv2-home .hv2-days button { padding: 7px 3px; }
+ .hv2-home .hv2-days button > strong { font-size: 9px; letter-spacing: -.4px; }
+ .hv2-home .hv2-coming .bc-section-head { align-items: flex-start; }
+ .hv2-home .bc-projection-row { gap: 10px; }
+ .hv2-home .bc-projection-row strong { font-size: 12px; }
+ .hv2-home .bc-date-chip { min-width: 48px; }
+ .ref-home-tabs { gap: 8px; }
+ .bc-app .ref-home-tabs button { padding-inline: 14px; font-size: 11px; }
+ .category-management-row { flex-wrap: wrap; gap: 6px; }
+ .category-management-row > p { flex-basis: calc(100% - 40px); }
+ .category-management-row > button { margin-left: 32px; }
+}
+/* Keep all seven dates visible; earlier candidates used a scrolling day grid. */
+.hv2-home .hv2-days { grid-template-columns: repeat(7,minmax(0,1fr)); overflow: visible; padding: 0; }
+.hv2-home .hv2-days button { min-width: 0; width: auto; }
+/* Secondary history tools live in the header menu, leaving the chart uncluttered. */
+.hv2-home .bc-wealth-panel > .bc-wealth-foot { position: absolute; top: 19px; right: 66px; width: auto; margin: 0; padding: 0; border: 0; z-index: 5; }
+.hv2-home .bc-wealth-foot > small { display: none; }
+.hv2-home .bc-wealth-foot details { position: relative; width: 44px; min-width: 44px; max-width: 220px; }
+.hv2-home .bc-wealth-foot summary { width: 44px; height: 44px; display: grid; place-items: center; font-size: 0; cursor: pointer; list-style: none; }
+.hv2-home .bc-wealth-foot summary::after { content: '⋮'; font-size: 21px; color: #bbb; }
+.hv2-home .bc-wealth-foot summary::-webkit-details-marker { display: none; }
+.hv2-home .bc-wealth-foot details[open] { width: 200px; padding: 44px 10px 10px; background: #191919; border: 1px solid #444; border-radius: 12px; }
+.hv2-home .bc-wealth-foot details[open] summary { position: absolute; top: 0; right: 0; }
+.hv2-home .bc-wealth-foot details[open] button { white-space: normal; text-align: left; padding: 10px; }
+.hv2-home .bc-wealth-foot summary:focus-visible { outline: 2px solid white; outline-offset: -3px; border-radius: 8px; }
+.hv2-home .bc-wealth-panel > .bc-period-context { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.hv2-home .bc-wealth-panel > .bc-trend { margin-top: 16px; padding-bottom: 18px; }
+.hv2-home .bc-trend-svg { height: 165px; }
+.hv2-home .bc-wealth-panel > .bc-primary { margin-top: 18px; }
+@media(min-width:1000px) { .hv2-home .bc-trend-svg { height: 205px; } }
+.hv2-home .bc-wealth-panel > .bc-section-head:first-child { padding-bottom: 5px; }
+.hv2-home .bc-wealth-panel > .bc-trend { padding-bottom: 0; }
+.hv2-home .bc-trend-svg { height: 155px; }
+.hv2-home .bc-wealth-panel > .bc-primary { border: 1px solid #666 !important; display: flex; align-items: center; gap: 7px; font-weight: 450; padding: 10px; }
+@media(min-width:1000px) { .hv2-home .bc-trend-svg { height: 195px; } }

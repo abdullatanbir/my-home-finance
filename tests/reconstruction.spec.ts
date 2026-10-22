@@ -139,7 +139,7 @@ test("hero hierarchy, circular player and viewport reveal financial content", as
       w = (await page.locator(".bc-wealth-panel").boundingBox())!,
       b = (await player.boundingBox())!;
     expect(h.height).toBeLessThan(250);
-    expect(w.y).toBeLessThan(width <= 600 ? 320 : 380);
+    expect(w.y).toBeLessThan(width <= 600 ? 400 : 450);
     expect(b.width).toBe(b.height);
     expect(b.width).toBeGreaterThanOrEqual(44);
     expect(

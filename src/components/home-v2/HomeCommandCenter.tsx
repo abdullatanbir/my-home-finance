@@ -99,8 +99,7 @@ export default function HomeCommandCenter(p: HomeProps) {
       (t) =>
         (inspectingDay
           ? t.transactionDate === selectedDay
-          : t.transactionDate >= days[0].date &&
-            t.transactionDate <= today()) &&
+          : t.transactionDate <= today()) &&
         ["expense", "refund"].includes(t.type),
     )
     .sort(
@@ -167,14 +166,14 @@ export default function HomeCommandCenter(p: HomeProps) {
         <div className="hv2-evidence-head">
           <span>
             {!inspectingDay
-              ? "Recent"
+              ? "Recent transactions"
               : selectedDay === today()
                 ? "Today"
                 : new Date(`${selectedDay}T12:00:00`).toLocaleDateString(
                     "en-US",
                     { month: "short", day: "numeric" },
-                  )}{" "}
-            · Spending activity
+                  )}
+            {inspectingDay && " · Spending activity"}
           </span>
           <button
             className="bc-text-button"
@@ -190,7 +189,7 @@ export default function HomeCommandCenter(p: HomeProps) {
           <p className="bc-empty">
             {inspectingDay
               ? "No spending recorded for this day."
-              : "No spending recorded in the past seven days."}
+              : "No spending activity yet."}
           </p>
         )}
         <button className="hv2-link" onClick={() => p.onNavigate("Spending")}>

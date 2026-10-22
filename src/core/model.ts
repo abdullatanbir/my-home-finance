@@ -22,6 +22,9 @@ export interface Category {
     type: TransactionType;
     parentId?: string;
     level: 'group' | 'category' | 'subcategory';
+    /** Optional presentation metadata; older stores remain compatible. */
+    icon?: string;
+    color?: string;
 }
 export interface Transaction {
     id: string;

@@ -1,3 +1,4 @@
+import {CategoryIcon,categoryAppearance,categoryColors} from '../categories/CategoryIcon';
 import { useState, type ReactNode } from "react";
 import { ArrowUpRight, Plus, SlidersHorizontal } from "lucide-react";
 import {
@@ -32,13 +33,6 @@ type Props = {
   onBudget: () => void;
   transactions: (items: Transaction[]) => ReactNode;
 };
-const palette = [
-  "var(--bc-purple)",
-  "var(--bc-warning)",
-  "var(--bc-cyan)",
-  "var(--bc-positive)",
-  "var(--bc-negative)",
-];
 export default function SpendingWorkspace(p: Props) {
   const { store, period, tab, day, rows } = p;
   const [grouping, setGrouping] = useState<"category" | "group">("category");
@@ -265,24 +259,24 @@ export default function SpendingWorkspace(p: Props) {
                 >
                   {categories
                     .filter((c) => c.value > 0)
-                    .map((c, i) => (
+                    .map((c) => (
                       <span
                         title={`${c.name}: ${money(c.value)}`}
                         key={c.id}
                         style={{
                           flex: c.value,
-                          background: palette[i % palette.length],
+                          background: categoryColors[categoryAppearance(store.categories.find(x=>x.id===c.id)).color],
                         }}
                       />
                     ))}
                 </div>
-                {categories.map((c, i) => (
+                {categories.map((c) => (
                   <button
                     className="ex-category-row"
                     key={c.id}
                     onClick={() => p.onCategory(c.id, grouping === "group")}
                   >
-                    <i style={{ background: palette[i % palette.length] }} />
+                    <CategoryIcon category={store.categories.find(x=>x.id===c.id)} name={c.name}/>
                     <span>
                       <strong>{c.name}</strong>
                       <small>{c.items.length} supporting transactions</small>
@@ -290,7 +284,7 @@ export default function SpendingWorkspace(p: Props) {
                         <span
                           style={{
                             width: `${(Math.abs(c.value) / maximum) * 100}%`,
-                            background: palette[i % palette.length],
+                            background: categoryColors[categoryAppearance(store.categories.find(x=>x.id===c.id)).color],
                           }}
                         />
                       </span>
@@ -419,6 +413,7 @@ export default function SpendingWorkspace(p: Props) {
                       }
                     >
                       <span>
+                        <CategoryIcon category={store.categories.find((c)=>c.id===id)}/>
                         {store.categories.find((c) => c.id === id)?.name ||
                           "Uncategorized"}
                         <strong>
